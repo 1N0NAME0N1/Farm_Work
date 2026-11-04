@@ -21,4 +21,4 @@ The site uses email/password login. Supabase's default email sender is for testi
 
 ## Job tracking
 
-Choose **ดูแลไอดี** when creating an account-care job to get its editable checklist. Set the agreed payment when adding the job; it cannot be changed later. Daily progress tracks starting and ending gems and pulls, while the dashboard counts the agreed payment only after the job is marked **เสร็จแล้ว**, in the month it was completed.
+Choose **ฟาร์มเจม** to track the gem target and daily starting/ending currency and pulls. Choose **ดูแลไอดี** to set the customer, agreed payment, and duration; its checklist is recorded separately in each daily update. Set the agreed payment when adding either job type; it cannot be changed later. The dashboard counts it only after the job is marked **เสร็จแล้ว**, in the month it was completed.
