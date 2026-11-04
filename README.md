@@ -6,7 +6,7 @@
 
 1. Create a Supabase project and copy its Project URL and **publishable** key from **Settings → API Keys**. Never use a secret or service-role key in this website.
 2. In Supabase **SQL Editor**, run [`supabase/setup.sql`](supabase/setup.sql).
-3. Under **Authentication → URL Configuration**, set the Site URL to `https://1n0name0n1.github.io/Farm_Work/` and add that same address to Redirect URLs.
+3. Under **Authentication → URL Configuration**, set the Site URL to `https://1n0name0n1.github.io/Farm_Work/` and add `https://1n0name0n1.github.io/Farm_Work/**` to Redirect URLs. Signup also requests this GitHub Pages address as the email confirmation redirect.
 4. Keep email sign-ups enabled until deployment. Sign up once using the website, confirm your email, then disable new sign-ups in the Auth provider settings. Existing sign-ins will keep working.
 
 ## Run locally
