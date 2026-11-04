@@ -33,6 +33,7 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             await github.request('POST /repos/{owner}/{repo}/pages/deployments/{pages_deployment_id}/cancel', { owner, repo, pages_deployment_id: 'adba5a9895c024e8e6fdcce1ede579caaf760a27' });
+            await new Promise(resolve => setTimeout(resolve, 10000));
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
