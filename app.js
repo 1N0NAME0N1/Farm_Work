@@ -3,15 +3,15 @@ const games = { genshin: 'Genshin Impact', wuwa: 'Wuthering Waves' };
 const dateToday = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; };
 const money = amount => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(amount || 0);
 const configured = Boolean(window.FARMNOTE_CONFIG?.url && window.FARMNOTE_CONFIG?.publishableKey && window.supabase?.createClient);
-const supabase = configured ? window.supabase.createClient(window.FARMNOTE_CONFIG.url, window.FARMNOTE_CONFIG.publishableKey) : null;
+const supabaseClient = configured ? window.supabase.createClient(window.FARMNOTE_CONFIG.url, window.FARMNOTE_CONFIG.publishableKey) : null;
 let jobs = [], currentUser = null, authMode = 'signin', currentPage = 'dashboard', currentStatus = 'all', selectedJobId = null, editingJobId = null, selectedMonth = null, toastTimer;
 const save = async job => {
-  const { error } = await supabase.from('farm_jobs').upsert({id:job.id,owner_id:currentUser.id,game:job.game,title:job.title,client:job.client,status:job.status,job_date:job.date,updates:job.updates,updated_at:new Date().toISOString()});
+  const { error } = await supabaseClient.from('farm_jobs').upsert({id:job.id,owner_id:currentUser.id,game:job.game,title:job.title,client:job.client,status:job.status,job_date:job.date,updates:job.updates,updated_at:new Date().toISOString()});
   if (error) throw error;
 };
 const fromRow = row => ({id:row.id,game:row.game,title:row.title,client:row.client||'',status:row.status,date:row.job_date,updatedAt:row.updated_at,updates:Array.isArray(row.updates)?row.updates:[]});
 async function loadJobs() {
-  const {data,error}=await supabase.from('farm_jobs').select('*').order('updated_at',{ascending:false});
+  const {data,error}=await supabaseClient.from('farm_jobs').select('*').order('updated_at',{ascending:false});
   if(error){showToast(`โหลดข้อมูลงานไม่สำเร็จ: ${error.message}`);return;}
   jobs=data.map(fromRow);render();
 }
@@ -93,14 +93,14 @@ document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('cli
 console.assert(monthKey('2026-11-05')==='2026-11' && monthKey('2026-10-31')!=='2026-11','Month totals must use the update date.');
 document.querySelector('#today-label').textContent=new Intl.DateTimeFormat('th-TH',{weekday:'short',day:'numeric',month:'short',year:'numeric'}).format(new Date());
 
-document.querySelector('#auth-form').addEventListener('submit',async event=>{event.preventDefault();if(!supabase)return;const fields=event.currentTarget.elements,message=document.querySelector('#auth-message');message.textContent='กำลังเชื่อมต่อ…';const result=authMode==='signin'?await supabase.auth.signInWithPassword({email:fields.email.value.trim(),password:fields.password.value}):await supabase.auth.signUp({email:fields.email.value.trim(),password:fields.password.value});if(result.error){message.textContent=result.error.message;return;}if(authMode==='signup'&&!result.data.session)message.textContent='สมัครแล้ว กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ';else message.textContent='';});
+document.querySelector('#auth-form').addEventListener('submit',async event=>{event.preventDefault();if(!supabaseClient)return;const fields=event.currentTarget.elements,message=document.querySelector('#auth-message');message.textContent='กำลังเชื่อมต่อ…';const result=authMode==='signin'?await supabaseClient.auth.signInWithPassword({email:fields.email.value.trim(),password:fields.password.value}):await supabaseClient.auth.signUp({email:fields.email.value.trim(),password:fields.password.value});if(result.error){message.textContent=result.error.message;return;}if(authMode==='signup'&&!result.data.session)message.textContent='สมัครแล้ว กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ';else message.textContent='';});
 document.querySelector('#auth-switch').addEventListener('click',()=>{authMode=authMode==='signin'?'signup':'signin';document.querySelector('#auth-form button[type="submit"]').textContent=authMode==='signin'?'เข้าสู่ระบบ':'สมัครใช้งาน';document.querySelector('#auth-switch').textContent=authMode==='signin'?'ยังไม่มีบัญชี? สมัครใช้งาน':'มีบัญชีแล้ว? เข้าสู่ระบบ';document.querySelector('#auth-message').textContent='';});
-document.querySelector('#signout-button').addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();if(error)showToast(`ออกจากระบบไม่สำเร็จ: ${error.message}`);});
+document.querySelector('#signout-button').addEventListener('click',async()=>{const {error}=await supabaseClient.auth.signOut();if(error)showToast(`ออกจากระบบไม่สำเร็จ: ${error.message}`);});
 (async()=>{
 if(!configured)document.querySelector('#auth-setup').classList.remove('hidden');
 else {
-  supabase.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;document.querySelector('#auth-screen').classList.toggle('hidden',Boolean(currentUser));document.querySelector('.app-shell').classList.toggle('hidden',!currentUser);document.querySelector('#account-email').textContent=currentUser?.email||'';if(currentUser)queueMicrotask(()=>loadJobs());else{jobs=[];render();}});
-  const {data:{session}}=await supabase.auth.getSession();
+  supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;document.querySelector('#auth-screen').classList.toggle('hidden',Boolean(currentUser));document.querySelector('.app-shell').classList.toggle('hidden',!currentUser);document.querySelector('#account-email').textContent=currentUser?.email||'';if(currentUser)queueMicrotask(()=>loadJobs());else{jobs=[];render();}});
+  const {data:{session}}=await supabaseClient.auth.getSession();
   currentUser=session?.user||null;
   if(currentUser){document.querySelector('#auth-screen').classList.add('hidden');document.querySelector('.app-shell').classList.remove('hidden');document.querySelector('#account-email').textContent=currentUser.email||'';await loadJobs();}
 }
