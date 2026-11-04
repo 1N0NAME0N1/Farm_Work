@@ -18,3 +18,7 @@ Open `index.html` through a local static web server. `config.js` contains the pu
 The workflow in `.github/workflows/pages.yml` deploys on every push to `main`. Set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. `config.js` contains only the publishable key, which is designed to be public; Supabase Auth and RLS restrict rows to the signed-in user. Never put a secret or service-role key in the site.
 
 The site uses email/password login. Supabase's default email sender is for testing; configure custom SMTP if email confirmations need reliable delivery.
+
+## Job tracking
+
+Choose **ดูแลไอดี** when creating an account-care job to get its editable daily checklist. Income from progress updates is counted on the dashboard only after the job is marked **เสร็จแล้ว**, in the month it was completed.
