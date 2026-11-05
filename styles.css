@@ -117,3 +117,89 @@ body{min-width:320px}
   .nav-link.active{font-size:7px}.game-icon{width:19px;height:19px;flex-basis:19px}
   .calendar-grid{gap:2px}.calendar-day,.calendar-empty{min-height:33px}
 }
+
+/* Plain, readable hierarchy for a personal work ledger. */
+:root{--green:#9ca879;--mint:#272a22}
+.eyebrow,.section-kicker{font-size:11px;letter-spacing:.2px;text-transform:none;color:#a3ad7d}
+.eyebrow-line{display:none}
+h1{font-size:30px;font-weight:600;letter-spacing:-.4px}
+.page-subtitle{font-size:13px;line-height:1.65}
+.brand-mark{border-radius:8px;background:#747f52}
+.brand small{font-size:9px;letter-spacing:.3px;color:#909287}
+.nav-link{font-size:13px;border-radius:6px}
+.main-content{max-width:1500px}
+.topbar{height:64px}
+.breadcrumb{font-size:12px}
+.metric-grid{gap:12px;margin-bottom:20px}
+.metric-card{min-height:128px;padding:19px 20px 16px;border-radius:8px;box-shadow:none}
+.income-card{background:#1b1d19;border-color:#33362c}
+.metric-label{font-size:13px;color:#a6a79c}
+.metric-number{font-size:34px;font-weight:600;letter-spacing:-.5px}
+.income-card .metric-number{color:#c1c99d}
+.metric-bottom{margin-top:12px}
+.metric-sub{font-size:11px;color:#92948b}
+.content-panel{border-radius:8px;box-shadow:none}
+.section-heading{padding:20px 21px 16px}
+.section-heading h2{font-size:17px;font-weight:600}
+.section-heading p{font-size:12px}
+th{font-size:10px;letter-spacing:.2px}td{font-size:12px}
+.job-name{font-size:12px}
+.empty-state{padding:40px 16px}
+.empty-state h3{font-size:16px}.empty-state p{font-size:12px}
+.dashboard-note{font-size:11px}
+.footer{font-size:10px;letter-spacing:.2px}
+.game-toolbar{margin-bottom:16px}
+.filter-tabs{gap:22px}.filter-tab{font-size:12px;padding:13px 0}
+.filter-tab span{font-size:10px;border-radius:4px}
+.sort-label{font-size:11px}
+.job-grid{gap:12px}
+.job-card{padding:18px;border-radius:8px;box-shadow:none}
+.job-card:hover{transform:none;box-shadow:none;border-color:#454a39}
+.card-status{font-size:10px;border-radius:4px;padding:4px 8px}
+.card-title{font-size:16px;margin:13px 0 6px}
+.card-meta{font-size:11px}
+.card-income-label{font-size:11px}
+.card-income{font-size:19px}
+.card-date{font-size:10px}
+.card-action{font-size:11px;padding:8px 10px;border-radius:5px}
+.primary-button{border-radius:6px;padding:11px 15px;font-size:12px;box-shadow:none}
+.outline-button,.cancel-button,.danger-button{font-size:11px;border-radius:5px}
+.dialog-top h2{font-size:21px}
+dialog label,.auth-card label{font-size:12px}
+dialog input,dialog select,.auth-card input{height:42px;font-size:13px}
+.detail-total{border-radius:6px}
+.history-heading{font-size:13px}
+.history-entry strong{font-size:12px}.history-entry p{font-size:11px}
+.history-empty{font-size:12px}
+.month-select{font-size:11px}
+.metric-decoration,.wave,.note-icon,.footer-dot,.footer-star{display:none}
+.auth-card{border-radius:10px;box-shadow:0 12px 35px #0005}
+@media(max-width:850px){
+  h1{font-size:27px}
+  .metric-card{padding:16px}
+}
+@media(max-width:720px){
+  .topbar{height:54px}
+  .page-view{padding-top:20px}
+  .welcome-row h1{font-size:23px}
+  .page-subtitle{font-size:12px}
+  .welcome-row>.primary-button{font-size:10px}
+  .metric-card{padding:14px;min-height:112px}
+  .metric-card:first-child{min-height:122px}
+  .metric-label{font-size:12px}.metric-number{font-size:29px}.metric-sub{font-size:10px}
+  .section-heading{padding:16px}
+  .section-heading h2{font-size:15px}.section-heading p{font-size:11px}
+  .filter-tab{font-size:10px}
+  .job-card{padding:16px}.card-title{font-size:15px}.card-meta{font-size:10px}
+  .card-income{font-size:18px}.card-action{font-size:10px}
+  .nav-link,.nav-link:not(.active){font-size:9px}
+  .nav-link.active{font-size:9px}
+  .footer{font-size:9px}
+}
+@media(max-width:380px){
+  .nav-link,.nav-link:not(.active){font-size:8px;gap:3px}
+  .nav-link.active{font-size:8px}
+  .metric-card{padding:11px}
+  .metric-number{font-size:26px}
+  .metric-sub{font-size:9px}
+}
