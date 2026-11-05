@@ -203,3 +203,85 @@ dialog input,dialog select,.auth-card input{height:42px;font-size:13px}
   .metric-number{font-size:26px}
   .metric-sub{font-size:9px}
 }
+
+/* Farmnote ledger system: one summary rail, restrained borders, no ornament. */
+:root{--ledger-bg:#111210;--ledger-surface:#191a17;--ledger-line:#30312b;--ledger-text:#e6e4dc;--ledger-muted:#9c9d92;--ledger-accent:#b1bb83}
+body,.main-content{background:var(--ledger-bg);color:var(--ledger-text)}
+h1{font-size:32px;letter-spacing:-.6px}
+.page-subtitle{max-width:620px;color:#aaaba1}
+.main-content{max-width:1420px}
+.topbar{border-color:var(--ledger-line)}
+.breadcrumb{color:#898b81}.breadcrumb strong{color:var(--ledger-text)}
+.primary-button{background:var(--ledger-accent);border-color:var(--ledger-accent);color:#171811;border-radius:5px}
+.primary-button:hover{background:#c0ca90}
+.metric-grid{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:0;margin:24px 0 30px;background:#191a17;border:1px solid var(--ledger-line);border-radius:6px;overflow:hidden}
+.metric-card,.income-card{min-width:0;min-height:0;padding:19px 22px;background:transparent;border:0;border-radius:0;box-shadow:none}
+.metric-card+.metric-card{border-left:1px solid var(--ledger-line)}
+.metric-label{font-size:12px;color:#a4a59b}
+.metric-number,.income-card .metric-number{margin:11px 0 0;font-size:34px;color:var(--ledger-text);letter-spacing:-.7px}
+.income-card .metric-number{color:var(--ledger-accent)}
+.metric-bottom{margin-top:7px}.metric-sub{font-size:11px;color:var(--ledger-muted)}
+.content-panel{background:transparent;border:0;border-top:1px solid var(--ledger-line);border-radius:0;overflow:visible}
+.section-heading{padding:17px 0 14px}
+.section-heading h2{font-size:19px}.section-heading p{font-size:12px;color:var(--ledger-muted)}
+.text-button{font-size:12px;color:var(--ledger-accent)}
+thead{background:transparent}th{color:#888a80;border-color:var(--ledger-line)}td{border-color:#272923;color:#c3c2b8}
+.job-name{color:var(--ledger-text)}.game-pill{border-radius:3px}
+.dashboard-note{padding:12px 0;color:#929389}
+.footer{border-color:var(--ledger-line);color:#86877e}
+.game-toolbar{border-color:var(--ledger-line)}
+.filter-tab{color:#a0a096}.filter-tab.selected{color:var(--ledger-accent)}.filter-tab.selected:after{background:var(--ledger-accent)}
+.filter-tab span{background:#22231f;color:#b2b2a8;border-radius:3px}
+.job-grid{gap:12px}
+.job-card{padding:17px 18px;background:#171815;border:0;border-left:2px solid #626b47;border-bottom:1px solid var(--ledger-line);border-radius:0;box-shadow:none}
+.job-card:hover{transform:none;border-color:var(--ledger-accent);box-shadow:none}
+.card-status{padding:0;background:none;color:var(--ledger-accent);font-size:11px}
+.card-status.completed{background:none;color:#a4a69a}
+.card-title{margin:11px 0 6px;font-size:17px;color:var(--ledger-text)}
+.card-meta{font-size:11px;color:#999a90}
+.card-divider{margin:13px 0 10px;border-color:#2b2c26}
+.card-income-row{align-items:center}.card-income-label,.card-date{color:#9c9d92}
+.card-income{font-size:20px;color:#d4d6c5}
+.card-progress-row{margin:11px 0 2px;gap:10px}
+.card-progress{height:3px;background:#30312b}
+.card-progress span{background:var(--ledger-accent)}
+.card-progress-value{min-width:34px;text-align:right;color:#aeb68b;font-size:10px}
+.card-actions{margin-top:13px;padding-top:11px;border-top:1px solid #2b2c26}
+.card-action{padding:6px 8px;background:transparent;border-color:transparent;color:#bdc097}
+.card-action:hover{background:#24261e;color:#e0e4c9}
+.card-more{color:#a5a59b}.job-empty,.empty-state{color:var(--ledger-text)}
+.empty-state p{color:var(--ledger-muted)}
+.month-select{background:#20211c;border-color:#393a32;color:#d2d2c8}
+.auth-card{background:#191a17;border-color:#30312b;border-radius:7px;box-shadow:none}
+dialog{background:#191a17;border-color:#393a32;border-radius:7px;box-shadow:0 18px 55px #0009}
+dialog::backdrop{background:#050605cc;backdrop-filter:blur(2px)}
+dialog input,dialog select,.auth-card input{background:#121310;border-color:#36372f;border-radius:4px}
+.checklist-editor,.calendar-record{background:#151613;border-color:#30312b;border-radius:4px}
+.detail-total{background:#20221b;border-color:#373a2d;border-radius:4px}
+.history-entry{border-color:#424438}.history-entry:before{background:var(--ledger-accent)}
+.toast{background:#d7dbc5;color:#171811;border-radius:4px;box-shadow:none}
+.eyebrow,.section-kicker,.eyebrow-line,.metric-decoration,.metric-icon,.metric-tag{display:none}
+@media(max-width:850px){
+  h1{font-size:28px}
+  .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .metric-card:first-child{grid-column:1/-1;border-bottom:1px solid var(--ledger-line)}
+  .metric-card:nth-child(2){border-left:0}
+  .metric-card:nth-child(3){border-left:1px solid var(--ledger-line)}
+}
+@media(max-width:720px){
+  h1{font-size:24px}
+  .metric-grid{margin:17px 0 24px}
+  .metric-card,.income-card{padding:14px 15px}
+  .metric-number,.income-card .metric-number{font-size:29px}
+  .metric-card:first-child{min-height:0}
+  .metric-card:nth-child(2),.metric-card:nth-child(3){min-height:90px}
+  .section-heading{padding:14px 0}
+  .job-card{padding:15px 14px}
+  .card-title{font-size:15px}
+  .dashboard-note{font-size:10px}
+  .nav-link,.nav-link:not(.active){font-size:9px;gap:3px}
+  .nav-link.active{font-size:9px}
+  .game-nav{min-width:0}
+  .game-nav .nav-link{overflow:hidden}
+}
+@media(max-width:380px){.metric-card,.income-card{padding:12px}.metric-number,.income-card .metric-number{font-size:26px}.nav-link,.nav-link:not(.active){font-size:8px;gap:2px}.nav-link.active{font-size:8px}.game-icon{width:18px;height:18px;flex-basis:18px}}
