@@ -4,6 +4,7 @@ create table if not exists public.farm_jobs (
   game text not null check (game in ('genshin', 'wuwa')),
   title text not null check (char_length(title) between 1 and 80),
   client text not null default '' check (char_length(client) <= 60),
+  customer_conditions text not null default '' check (char_length(customer_conditions) <= 1000),
   status text not null default 'active' check (status in ('active', 'completed')),
   service text not null default 'gem_farm' check (service in ('gem_farm', 'account_care')),
   duration_days integer not null default 0 check (duration_days >= 0),

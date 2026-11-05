@@ -37,6 +37,7 @@ const fromRow = (row) => ({
   game: row.game,
   title: row.title,
   client: row.client || "",
+  customerConditions: row.customer_conditions || "",
   status: row.status,
   service: row.service || "gem_farm",
   durationDays: Number(row.duration_days) || 0,
@@ -130,6 +131,7 @@ function App() {
         game: job.game,
         title: job.title,
         client: job.client,
+        customer_conditions: job.customerConditions,
         status: job.status,
         service: job.service,
         duration_days: job.durationDays,
@@ -760,6 +762,7 @@ function JobModal({ job, editing, close, save, busy }) {
     game: job?.game || "genshin",
     service: job?.service || "gem_farm",
     client: job?.client || "",
+    customerConditions: job?.customerConditions || "",
     agreedAmount: job?.agreedAmount ?? "",
     targetGems: job?.targetGems || "",
     durationDays: job?.durationDays || "",
@@ -786,6 +789,7 @@ function JobModal({ job, editing, close, save, busy }) {
           e.preventDefault();
           save({
             ...form,
+            customerConditions: form.customerConditions.trim(),
             targetGems:
               form.service === "gem_farm" ? Number(form.targetGems) : 0,
             durationDays:
@@ -854,6 +858,18 @@ function JobModal({ job, editing, close, save, busy }) {
             )}
           </label>
         </div>
+        <label className="block text-sm text-[#b1b2a8]">
+          เงื่อนไขของลูกค้า
+          <textarea
+            className={`${field} min-h-24 resize-y`}
+            maxLength={1000}
+            rows={3}
+            value={form.customerConditions}
+            onChange={(e) => set("customerConditions", e.target.value)}
+            placeholder="เช่น งานที่ต้องทำเป็นพิเศษ หรือข้อตกลงในการส่งมอบ"
+          />
+          <small className="text-xs text-[#85877e]">ไม่เกิน 1,000 ตัวอักษร</small>
+        </label>
         {form.service === "gem_farm"
           ? input("เป้าหมายเจม / แอสไตรต์", "targetGems", {
               type: "number",
@@ -1082,6 +1098,12 @@ function DetailModal({
       <p className="mt-3 text-sm text-[#a8aa9d]">
         ค่าจ้างที่ตกลง: {money(job.agreedAmount)}
       </p>
+      <section className="mt-4 rounded-xl border border-[#30322c] bg-[#1b1c19] p-4">
+        <h3 className="text-xs font-medium text-[#a5a69b]">เงื่อนไขของลูกค้า</h3>
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-[#d5d5c9]">
+          {job.customerConditions?.trim() || "ไม่มีเงื่อนไขเพิ่มเติม"}
+        </p>
+      </section>
       <p className="mt-1 text-sm text-[#a8aa9d]">
         {gem
           ? `ฟาร์มแล้ว ${gems.toLocaleString("th-TH")} / ${job.targetGems.toLocaleString("th-TH")} ${currency[job.game]}`
