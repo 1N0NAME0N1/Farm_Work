@@ -222,7 +222,7 @@ function App() {
 
   return (
     <div
-      className="min-h-screen bg-[#111210] text-[#e5e4dc]"
+      className="min-h-screen bg-[#111210] text-[#e5e4dc] md:flex"
       style={{
         "--color-card": "#181916",
         "--color-border": "#292b26",
@@ -233,7 +233,7 @@ function App() {
         "--color-ring": "#9aa977",
       }}
     >
-      <aside className="fixed inset-x-0 bottom-0 z-20 flex h-[68px] items-center justify-around border-t border-[#292b26] bg-[#171815] px-2 md:inset-y-0 md:right-auto md:h-auto md:w-60 md:flex-col md:items-stretch md:justify-start md:border-r md:border-t-0 md:px-5 md:py-7">
+      <aside className="fixed inset-x-0 bottom-0 z-20 flex h-[68px] items-center justify-around border-t border-[#292b26] bg-[#171815] px-2 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:self-start md:flex-col md:items-stretch md:justify-start md:overflow-y-auto md:border-r md:border-t-0 md:px-5 md:py-7">
         <Brand />
         <p className="hidden px-3 pb-2 pt-8 text-[10px] font-semibold uppercase tracking-[.16em] text-[#85877e] md:block">
           เมนูหลัก
@@ -282,7 +282,7 @@ function App() {
           </button>
         </div>
       </aside>
-      <main className="mx-auto min-h-screen max-w-[1500px] px-4 pb-24 md:ml-60 md:px-10 md:pb-8 xl:px-14">
+      <main className="mx-auto min-h-screen w-full min-w-0 max-w-[1500px] px-4 pb-24 md:ml-0 md:flex-1 md:px-10 md:pb-8 xl:px-14">
         <header className="flex h-14 items-center justify-between border-b border-[#292b26] md:h-[70px]">
           <div className="text-xs text-[#9a9c91]">
             งานของฉัน <span className="px-2 text-[#55574f]">/</span>{" "}
@@ -728,7 +728,7 @@ function JobCard({ job, onDetail, onEdit, onUpdate }) {
 function Modal({ title, close, children, wide = false }) {
   return (
     <div
-      className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-black/75 p-3 backdrop-blur-sm"
+      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/75 p-3 backdrop-blur-sm sm:items-center sm:p-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
       }}
@@ -737,7 +737,7 @@ function Modal({ title, close, children, wide = false }) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`my-auto max-h-[95vh] w-full ${wide ? "max-w-2xl" : "max-w-lg"} overflow-y-auto rounded-2xl border border-[#34362f] bg-[#181916] p-5 shadow-2xl md:p-6`}
+        className={`my-auto max-h-[calc(100dvh-1.5rem)] w-full ${wide ? "max-w-2xl" : "max-w-lg"} overscroll-contain overflow-y-auto rounded-2xl border border-[#34362f] bg-[#181916] p-5 shadow-2xl sm:max-h-[calc(100dvh-3rem)] md:p-6`}
       >
         <header className="mb-5 flex items-start justify-between gap-4">
           <h2 className="text-lg font-semibold">{title}</h2>
