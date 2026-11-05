@@ -69,3 +69,4 @@ dialog input:focus,.auth-card input:focus{border-color:#879361;box-shadow:0 0 0 
 .calendar-record p{margin:4px 0;color:#96988f;font-size:9px}
 .calendar-record ul{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin:7px 0 0;padding:0;list-style:none}
 .calendar-record li{color:#85877f;font-size:9px}.calendar-record li.done{color:#c0ca9c}
+.game-icon{width:22px;height:22px;flex:0 0 22px;object-fit:cover;border-radius:6px;border:1px solid #ffffff20}
