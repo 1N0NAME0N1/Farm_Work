@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "DM Sans", "Noto Sans Thai", sans-serif;
+  color: #e5e4dc;
+  background: #111210;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+::selection {
+  background: #7e895b;
+  color: #10110e;
+}

@@ -11,11 +11,11 @@
 
 ## Run locally
 
-Open `index.html` through a local static web server. `config.js` contains the public project URL and publishable key used by the browser.
+Install Node.js 20.19+ or 22.12+, then run `npm ci` and `npm run dev`. `config.js` contains the public project URL and publishable key used by the browser. Create a production build with `npm run build`.
 
 ## Publish with GitHub Pages
 
-The workflow in `.github/workflows/pages.yml` deploys on every push to `main`. Set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. `config.js` contains only the publishable key, which is designed to be public; Supabase Auth and RLS restrict rows to the signed-in user. Never put a secret or service-role key in the site.
+The workflow in `.github/workflows/pages.yml` builds the React and Tailwind app and deploys `dist` on every push to `main`. Set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. `config.js` contains only the publishable key, which is designed to be public; Supabase Auth and RLS restrict rows to the signed-in user. Never put a secret or service-role key in the site.
 
 The site uses email/password login. Supabase's default email sender is for testing; configure custom SMTP if email confirmations need reliable delivery.
 
