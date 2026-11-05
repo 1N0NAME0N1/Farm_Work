@@ -70,3 +70,50 @@ dialog input:focus,.auth-card input:focus{border-color:#879361;box-shadow:0 0 0 
 .calendar-record ul{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin:7px 0 0;padding:0;list-style:none}
 .calendar-record li{color:#85877f;font-size:9px}.calendar-record li.done{color:#c0ca9c}
 .game-icon{width:22px;height:22px;flex:0 0 22px;object-fit:cover;border-radius:6px;border:1px solid #ffffff20}
+body{min-width:320px}
+@media(max-width:850px){
+  .main-content{padding-inline:24px}
+  .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .income-card{grid-column:1/-1}
+  .job-grid{grid-template-columns:1fr}
+  .account-email{display:none}
+  .page-view{max-width:100%}
+}
+@media(max-width:720px){
+  .sidebar{inset:auto 0 0;width:100%;height:auto;min-height:64px;padding:6px 10px calc(6px + env(safe-area-inset-bottom));flex-direction:row;align-items:center;justify-content:center;border-right:0;border-top:1px solid #292b26}
+  .sidebar>.brand,.sidebar>.nav-label,.sidebar>.sidebar-bottom{display:none}
+  .main-nav,.game-nav{display:flex;width:auto;gap:4px;margin:0;align-items:center;justify-content:center}
+  .main-nav{flex:0 0 auto}.game-nav{flex:1}
+  .nav-link,.nav-link:not(.active){display:flex;flex:1;min-width:0;height:48px;justify-content:center;gap:4px;padding:0 3px;border-radius:8px;font-size:8px;line-height:1.2;white-space:nowrap}
+  .nav-link.active{font-size:8px}
+  .nav-link:not(.active) .nav-count,.nav-count{display:none}
+  .nav-arrow{display:none}.nav-icon{width:auto;font-size:16px}
+  .game-icon{width:20px;height:20px;flex-basis:20px;border-radius:5px}
+  .main-content{margin-left:0;padding:0 16px 84px}
+  .topbar{height:56px}.page-view{padding:22px 0 20px;min-height:0}
+  .welcome-row{align-items:center;gap:8px;margin-bottom:20px}
+  .welcome-row h1{font-size:21px}.page-subtitle{line-height:1.6}
+  .welcome-row>.primary-button{margin:0;padding:9px 10px;font-size:9px;white-space:nowrap}
+  .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .metric-card:first-child{grid-column:1/-1;min-height:122px}
+  .metric-card:not(:first-child){min-height:112px}
+  .section-heading{gap:10px;padding:15px}
+  .section-heading h2{font-size:14px}.text-button{white-space:nowrap}
+  .game-toolbar{display:block;padding-bottom:0}
+  .filter-tabs{justify-content:space-between;gap:5px}
+  .filter-tab{font-size:9px}.sort-label{display:none}
+  .job-grid{grid-template-columns:1fr;gap:10px}
+  .footer{margin-bottom:4px}
+  dialog{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+  dialog form,.detail-content{padding:18px}
+  .history-list.care-calendar-view{max-height:330px}
+}
+@media(max-width:380px){
+  .main-content{padding-inline:12px;padding-bottom:82px}
+  .metric-grid{gap:7px}.metric-card{padding:10px}
+  .metric-number{font-size:24px}.metric-chip{padding:4px 5px}
+  .welcome-row h1{font-size:19px}.welcome-row>.primary-button{padding:8px;font-size:8px}
+  .nav-link,.nav-link:not(.active){font-size:7px;gap:3px}
+  .nav-link.active{font-size:7px}.game-icon{width:19px;height:19px;flex-basis:19px}
+  .calendar-grid{gap:2px}.calendar-day,.calendar-empty{min-height:33px}
+}
