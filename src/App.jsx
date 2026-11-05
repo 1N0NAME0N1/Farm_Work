@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import "../config.js";
+import genshinIcon from "../assets/genshin-icon.jpg";
+import wuwaIcon from "../assets/wuwa-icon.jpg";
 
 const games = { genshin: "Genshin Impact", wuwa: "Wuthering Waves" };
 const currency = { genshin: "เจม", wuwa: "แอสไตรต์" };
@@ -246,7 +248,7 @@ function App() {
           >
             <img
               className="h-5 w-5 rounded-md object-cover"
-              src={`${import.meta.env.BASE_URL}assets/${key === "genshin" ? "genshin-icon.jpg" : "wuwa-icon.jpg"}`}
+              src={key === "genshin" ? genshinIcon : wuwaIcon}
               alt=""
             />
             <span className="md:ml-1">{name}</span>
