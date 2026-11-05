@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import "../config.js";
 import genshinIcon from "../assets/genshin-icon.jpg";
 import wuwaIcon from "../assets/wuwa-icon.jpg";
+import MetricCard from "@/src/components/uniquel/MetricCard";
+import HorizontalCard from "@/src/components/uniquel/HorizontalCard";
 
 const games = { genshin: "Genshin Impact", wuwa: "Wuthering Waves" };
 const currency = { genshin: "เจม", wuwa: "แอสไตรต์" };
@@ -219,7 +221,18 @@ function App() {
     );
 
   return (
-    <div className="min-h-screen bg-[#111210] text-[#e5e4dc]">
+    <div
+      className="min-h-screen bg-[#111210] text-[#e5e4dc]"
+      style={{
+        "--color-card": "#181916",
+        "--color-border": "#292b26",
+        "--color-card-foreground": "#e5e4dc",
+        "--color-muted-foreground": "#96988f",
+        "--color-primary": "#9aa977",
+        "--color-primary-foreground": "#151610",
+        "--color-ring": "#9aa977",
+      }}
+    >
       <aside className="fixed inset-x-0 bottom-0 z-20 flex h-[68px] items-center justify-around border-t border-[#292b26] bg-[#171815] px-2 md:inset-y-0 md:right-auto md:h-auto md:w-60 md:flex-col md:items-stretch md:justify-start md:border-r md:border-t-0 md:px-5 md:py-7">
         <Brand />
         <p className="hidden px-3 pb-2 pt-8 text-[10px] font-semibold uppercase tracking-[.16em] text-[#85877e] md:block">
@@ -319,8 +332,8 @@ function App() {
                 ＋ เพิ่มงาน
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-              <Metric title="รายได้เดือนนี้" value={money(monthIncome)}>
+            <div className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 md:gap-4">
+              <div className="col-span-2 flex min-w-0 flex-col gap-2 md:col-span-1">
                 <select
                   aria-label="เลือกเดือน"
                   value={months.includes(month) ? month : months[0]}
@@ -336,7 +349,14 @@ function App() {
                     </option>
                   ))}
                 </select>
-              </Metric>
+                <MetricCard
+                  label="รายได้เดือนที่เลือก"
+                  value={money(monthIncome)}
+                  change={`${jobs.filter((job) => job.status === "completed" && (job.completedAt || job.updatedAt || "").slice(0, 7) === month).length} งาน`}
+                  detail="นับเฉพาะงานที่ปิดแล้ว"
+                  className="farmnote-metric max-w-none min-w-0 flex-1 !border-[#292b26] !bg-[#181916] !shadow-none"
+                />
+              </div>
               <Metric
                 title="กำลังทำ"
                 value={jobs.filter((job) => job.status === "active").length}
@@ -671,82 +691,40 @@ function Empty({ title, action }) {
   );
 }
 function JobCard({ job, onDetail, onEdit, onUpdate }) {
-  const gems =
-    job.service === "gem_farm"
-      ? job.updates.reduce(
-          (sum, item) => sum + (Number(item.gemsEarned) || 0),
-          0,
-        )
-      : 0;
-  const progress = job.targetGems
-    ? Math.min(100, Math.round((gems / job.targetGems) * 100))
-    : 0;
+  const gems = job.service === 'gem_farm' ? job.updates.reduce((sum, item) => sum + (Number(item.gemsEarned) || 0), 0) : 0;
+  const progress = job.targetGems ? Math.min(100, Math.round((gems / job.targetGems) * 100)) : 0;
+  const detail = job.service === 'gem_farm'
+    ? gems.toLocaleString('th-TH') + ' / ' + job.targetGems.toLocaleString('th-TH') + ' ' + currency[job.game] + ' (' + progress + '%)'
+    : job.durationDays + ' วัน · บันทึกแล้ว ' + job.updates.length + ' วัน';
+  const description = [job.client || 'ไม่ระบุลูกค้า', dateText(job.date), detail].join(' · ');
   return (
-    <article className="rounded-xl border border-[#2b2d27] bg-[#181916] p-4 transition hover:border-[#484a3c] md:p-5">
-      <div className="flex items-center justify-between">
-        <Status status={job.status} />
-        <button
-          aria-label="ดูรายละเอียด"
-          onClick={onDetail}
-          className="rounded px-2 text-lg text-[#999b90] hover:bg-[#282a24]"
-        >
-          ···
-        </button>
-      </div>
-      <button
-        onClick={onDetail}
-        className="mt-3 block text-left text-base font-semibold hover:text-[#c2cd9c]"
-      >
-        {job.title}
-      </button>
-      <p className="mt-1 text-xs text-[#92948b]">
-        {job.client || "ไม่ระบุลูกค้า"} · {dateText(job.date)}
-      </p>
-      <div className="my-4 border-t border-[#2a2c27]" />
-      <div className="flex items-end justify-between gap-2">
-        <div>
-          <p className="text-xs text-[#92948b]">
-            {job.service === "gem_farm"
-              ? `${currency[job.game]} สะสม`
-              : "ระยะเวลางาน"}
-          </p>
-          <strong className="mt-1 block text-sm font-semibold">
-            {job.service === "gem_farm"
-              ? `${gems.toLocaleString("th-TH")} / ${job.targetGems.toLocaleString("th-TH")}`
-              : `${job.durationDays} วัน · บันทึกแล้ว ${job.updates.length} วัน`}
-          </strong>
-        </div>
-        <span className="text-xs text-[#a5a69b]">
-          ค่าจ้าง {money(job.agreedAmount)}
-        </span>
-      </div>
-      {job.service === "gem_farm" && (
-        <div className="mt-3 flex items-center gap-2">
-          <div className="h-1.5 flex-1 rounded-full bg-[#30322c]">
-            <div
-              className="h-full rounded-full bg-[#9aa977]"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <span className="text-[10px] text-[#a5a69b]">{progress}%</span>
+    <div id={'job-' + job.id} className='overflow-hidden rounded-xl border border-[#2b2d27] bg-[#181916] transition hover:border-[#484a3c]' onClick={(event) => {
+      if (event.target.closest('a')) { event.preventDefault(); onDetail(); }
+    }}>
+      <HorizontalCard
+        image={job.game === 'genshin' ? genshinIcon : wuwaIcon}
+        imageAlt={games[job.game]}
+        label={job.status === 'completed' ? 'เสร็จแล้ว' : 'กำลังทำ'}
+        title={job.title}
+        description={description}
+        price={money(job.agreedAmount)}
+        actionLabel='ดูรายละเอียด'
+        href={'#job-' + job.id}
+        className='!max-w-none !rounded-none !border-0 !shadow-none'
+      />
+      {job.service === 'gem_farm' && (
+        <div className='flex items-center gap-2 px-4 pt-1'>
+          <div className='h-1.5 flex-1 rounded-full bg-[#30322c]'><div className='h-full rounded-full bg-[#9aa977]' style={{ width: progress + '%' }} /></div>
+          <span className='text-[10px] text-[#a5a69b]'>{progress}%</span>
         </div>
       )}
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={onUpdate}
-          className="flex-1 rounded-lg border border-[#373a31] bg-[#20211d] px-2 py-2 text-xs text-[#d5d5c9] hover:bg-[#292b24]"
-        >
-          ＋{" "}
-          {job.service === "gem_farm" ? "บันทึกยอดรายวัน" : "เช็กลิสต์รายวัน"}
-        </button>
-        <button onClick={onEdit} className={`${btn} px-3 py-2 text-xs`}>
-          แก้ไข
-        </button>
+      <div className='flex gap-2 p-4 pt-3'>
+        <button onClick={onUpdate} className='flex-1 rounded-lg border border-[#373a31] bg-[#20211d] px-2 py-2 text-xs text-[#d5d5c9] hover:bg-[#292b24]'>＋ {job.service === 'gem_farm' ? 'บันทึกยอดรายวัน' : 'เช็กลิสต์รายวัน'}</button>
+        <button onClick={onEdit} className={btn + ' px-3 py-2 text-xs'}>แก้ไข</button>
       </div>
-    </article>
+    </div>
   );
 }
-
 function Modal({ title, close, children, wide = false }) {
   return (
     <div

@@ -28,3 +28,9 @@ button {
   background: #7e895b;
   color: #10110e;
 }
+.farmnote-metric svg path:first-child {
+  stroke: #9aa977;
+}
+.farmnote-metric svg stop {
+  stop-color: #9aa977;
+}
