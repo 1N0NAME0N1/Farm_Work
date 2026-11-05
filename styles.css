@@ -106,7 +106,7 @@ body{min-width:320px}
   .footer{margin-bottom:4px}
   dialog{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
   dialog form,.detail-content{padding:18px}
-  .history-list.care-calendar-view{max-height:330px}
+  .history-list.care-calendar-view{max-height:420px}
 }
 @media(max-width:380px){
   .main-content{padding-inline:12px;padding-bottom:82px}
