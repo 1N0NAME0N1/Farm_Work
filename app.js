@@ -23,6 +23,7 @@ const gemsFarmed = job => job.service === 'gem_farm' ? job.updates.reduce((sum, 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[char]));
 const formatDate = value => value ? new Intl.DateTimeFormat('th-TH', { day:'numeric', month:'short', year:'numeric' }).format(new Date(`${value}T00:00:00`)) : '—';
 const monthKey = value => value?.slice(0, 7);
+const daysWorked = value => { const start=Date.parse(`${value}T00:00:00Z`),today=Date.parse(`${dateToday()}T00:00:00Z`); return Number.isFinite(start)?Math.max(0,Math.floor((today-start)/86400000)+1):0; };
 
 function render() {
   const now = new Date(), thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -113,7 +114,7 @@ function openDetail(id) {
   document.querySelector('#detail-title').textContent=job.title; document.querySelector('#detail-meta').textContent=`${games[job.game]} · ${job.client||'ไม่ระบุลูกค้า'} · ${job.status==='completed'?'เสร็จแล้ว':'กำลังทำ'}`;
   document.querySelector('#detail-total').textContent=money(income(job)); document.querySelector('.detail-total span').textContent=job.status==='completed'?'รายได้ที่นับแล้ว':'รายได้หลังปิดงาน';
   document.querySelector('#agreed-amount-detail').textContent=`ค่าจ้างที่ตกลง: ${money(job.agreedAmount)}`;
-  document.querySelector('#job-progress').textContent=gemFarm?`ฟาร์มแล้ว ${gemsFarmed(job).toLocaleString('th-TH')} / ${job.targetGems.toLocaleString('th-TH')} ${currencies[job.game]}`:job.durationDays?`ระยะเวลางาน ${job.durationDays} วัน`:'ยังไม่ได้ระบุระยะเวลางาน';
+  document.querySelector('#job-progress').textContent=gemFarm?`ฟาร์มแล้ว ${gemsFarmed(job).toLocaleString('th-TH')} / ${job.targetGems.toLocaleString('th-TH')} ${currencies[job.game]}`:`ทำมาแล้ว ${daysWorked(job.date)} วัน · ${job.durationDays?`ระยะเวลางาน ${job.durationDays} วัน`:'ยังไม่ได้ระบุระยะเวลางาน'}`;
   const history=document.querySelector('#history-list');
   document.querySelector('#history-heading').textContent=gemFarm?'ประวัติยอดฟาร์มรายวัน':'ปฏิทินเช็กลิสต์รายวัน';
   history.classList.toggle('care-calendar-view',!gemFarm);
