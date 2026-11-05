@@ -7,3 +7,44 @@
 @media(max-width:720px){.account-email{display:none}.auth-card{padding:24px}}
 .checklist-editor{margin:0 0 14px;padding:10px 12px;border:1px solid #e7ece4;border-radius:7px;background:#fafbf9}.checklist-title{display:flex;justify-content:space-between;margin:0 0 7px;color:#687265;font-size:10px;font-weight:600}.checklist-title span{color:#879184;font-weight:500}.checklist-item{display:flex;align-items:center;gap:8px;margin:0;padding:6px 0;color:#596156;font-size:10px;font-weight:400;cursor:pointer}.checklist-item input{width:14px;height:14px;margin:0;accent-color:#287953}.detail-content>.checklist-title{margin-top:15px}
 .field-hint{display:block;margin-top:5px;color:#90968f;font-size:9px;font-weight:400}.agreed-amount-detail{margin:7px 0;color:#788174;font-size:10px}.danger-button{border:1px solid #f0d9d5;border-radius:6px;background:#fff8f6;color:#a34c40;padding:8px 11px;font:inherit;font-size:10px;cursor:pointer}.danger-button:hover{background:#fcece8}.detail-actions{flex-wrap:wrap}.history-entry strong{display:block}
+
+/* Quiet charcoal palette with a restrained moss accent. */
+:root{color-scheme:dark;color:#e5e4dc;background:#111210;--muted:#92958b;--line:#2a2c27;--green:#98a976;--mint:#252a21}
+body,.app-shell,.main-content{background:#111210;color:#e5e4dc}
+.sidebar{background:#151613;border-color:#292b26}
+.brand,.breadcrumb strong,h1,.section-heading h2,.card-title,.job-name{color:#e5e4dc}
+.brand-mark,.primary-button{background:#727f50;border-color:#727f50;color:#10110e}
+.primary-button:hover{background:#84915f}
+.nav-link{color:#a4a59c}.nav-link:hover,.nav-link.active{background:#24271f;color:#c3cd9e}
+.nav-count,.storage-badge,.signout-button,.month-select{background:#1a1b18;border-color:#30322c;color:#a9aa9f}
+.storage-dot{background:#9aaa76;box-shadow:0 0 0 3px #282c22}
+.topbar,.content-panel,.job-card,.game-empty,.footer{border-color:#2a2c27}
+.topbar{border-bottom-color:#2a2c27}
+.metric-card,.content-panel,.job-card,.game-empty{background:#181916;border-color:#2a2c27}
+.income-card{background:#1d211a;border-color:#34392b}
+.metric-number,.income-card .metric-number,.card-income{color:#bdc995}
+.metric-icon,.empty-illustration,.metric-chip{background:#262920;border-color:#35382d;color:#aeb88a}
+.metric-decoration{border-color:#2c3025;box-shadow:0 0 0 10px #20231c,0 0 0 21px #1d201a}
+.metric-label,.metric-sub,.today-label,.breadcrumb,.page-subtitle,.section-heading p,.sort-label,.card-meta,.card-income-label,.card-date,.dialog-description,.agreed-amount-detail,.field-hint{color:#96988f}
+.metric-tag.green-tag{background:#292d22;color:#b0bd88}.metric-tag.neutral-tag{background:#252621;color:#a1a297}
+th,thead{background:#1b1c19}th,td{border-color:#292b26}td{color:#b0b0a6}.job-name:hover,.text-button,.auth-switch{color:#bac68e}
+.game-pill.genshin{background:#252d28;color:#a0b6a8}.game-pill.wuwa{background:#29292f;color:#aaa9c1}
+.filter-tab{color:#92948b}.filter-tab.selected{color:#c2cd9c}.filter-tab.selected:after{background:#899765}.filter-tab span{background:#292a25;color:#aaa99e}
+.card-status{background:#292d22;color:#b2be8e}.card-status.completed{background:#243029;color:#9cb8a5}
+.card-divider,.game-toolbar{border-color:#2a2c27}.job-card:hover{border-color:#454a39;box-shadow:0 8px 22px #0005}
+.card-action,.outline-button,.cancel-button,.icon-button{background:#20211d;border-color:#34362f;color:#b3b4a9}
+.card-action:hover,.outline-button:hover,.cancel-button:hover,.signout-button:hover{background:#292b24}
+dialog,.auth-screen{background:#111210;color:#e5e4dc}
+dialog{border-color:#34362f;box-shadow:0 22px 70px #000a}dialog::backdrop{background:#060705c9;backdrop-filter:blur(3px)}
+.auth-card{background:#181916;border-color:#30322c;box-shadow:0 20px 65px #0007}
+dialog label,.auth-card label{color:#b1b2a8}
+dialog input,dialog select,.auth-card input{background:#20211d;border-color:#35372f;color:#e5e4dc;color-scheme:dark}
+dialog input:focus,.auth-card input:focus{border-color:#879361;box-shadow:0 0 0 3px #707d5029}
+.detail-total{background:#20241c;border-color:#34392b;color:#aaad9e}.detail-total strong{color:#c0cd95}
+.checklist-editor{background:#1c1d19;border-color:#30322c}.checklist-title,.checklist-item{color:#b1b2a8}.checklist-title span{color:#96988d}.checklist-item input{accent-color:#9aa977}
+.history-entry{border-color:#424735}.history-entry:before{background:#9aa977}.history-entry p,.history-empty{color:#96988f}.history-entry span{color:#bbc88e}
+.danger-button{background:#281c19;border-color:#57352f;color:#dfa197}.danger-button:hover{background:#35231f}
+.toast{background:#d1d2bf;color:#171812;box-shadow:0 8px 26px #0008}
+.auth-setup{background:#20211d;color:#aaa99e}
+.sidebar-foot{border-color:#292b26;color:#85877e}
+::selection{background:#7e895b;color:#10110e}
