@@ -6,15 +6,18 @@ create table if not exists public.farm_jobs (
   client text not null default '' check (char_length(client) <= 60),
   customer_conditions text not null default '' check (char_length(customer_conditions) <= 1000),
   status text not null default 'active' check (status in ('active', 'completed')),
-  service text not null default 'gem_farm' check (service in ('gem_farm', 'account_care')),
+  service text not null default 'gem_farm' check (service in ('gem_farm', 'ore_farm', 'account_care')),
   duration_days integer not null default 0 check (duration_days >= 0),
   target_gems integer not null default 0 check (target_gems >= 0),
+  ore_types text[] not null default '{}'::text[],
   agreed_amount numeric(12, 2) not null default 0 check (agreed_amount >= 0),
   completed_at timestamptz,
   job_date date not null,
   updates jsonb not null default '[]'::jsonb check (jsonb_typeof(updates) = 'array'),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint farm_jobs_ore_types_check check (ore_types <@ array['iron_chunk', 'white_iron_chunk', 'crystal_chunk', 'magical_crystal_chunk', 'amethyst_lump', 'starsilver', 'condessence_crystal']::text[]),
+  constraint farm_jobs_ore_farm_check check ((service = 'ore_farm' and game = 'genshin' and cardinality(ore_types) > 0) or (service <> 'ore_farm' and cardinality(ore_types) = 0))
 );
 
 alter table public.farm_jobs enable row level security;

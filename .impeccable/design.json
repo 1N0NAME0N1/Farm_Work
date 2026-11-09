@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T08:00:00.000Z",
+  "title": "Design System: Farmnote",
+  "extensions": {
+    "colorMeta": {
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#090a0b",
+        "tonalRamp": ["#202122", "#353637", "#4b4c4d", "#626364", "#797a7b", "#929394", "#b0b1b1", "#e1e1e1"]
+      },
+      "olive": {
+        "role": "primary",
+        "displayName": "Muted Olive",
+        "canonical": "#a9b08d",
+        "tonalRamp": ["#27291f", "#3f4233", "#585b47", "#72765c", "#8c9172", "#a9b08d", "#c6cbb4", "#e5e7dc"]
+      },
+      "warm-white": {
+        "role": "neutral",
+        "displayName": "Warm White",
+        "canonical": "#e9e9e4",
+        "tonalRamp": ["#252522", "#3b3b37", "#53534e", "#6d6d67", "#888882", "#a4a49d", "#c3c3bc", "#e9e9e4"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Main page headings on wide screens." },
+      "body": { "displayName": "Body", "purpose": "Interface copy and job details; DM Sans with Noto Sans Thai fallback." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "control-transition", "value": "Tailwind transition defaults", "purpose": "Subtle button and link hover/focus state changes." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Olive action for the primary task in a view.",
+      "html": "<button class=\"ds-primary\">Add job</button>",
+      "css": ".ds-primary { background: #a9b08d; color: #11130e; padding: 10px 16px; border: 0; border-radius: 8px; font: 600 14px/1.5 'DM Sans', 'Noto Sans Thai', sans-serif; } .ds-primary:focus-visible { outline: 2px solid #a9b08d; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Dark, bordered form control with an olive focus state.",
+      "html": "<input class=\"ds-field\" aria-label=\"Job title\" />",
+      "css": ".ds-field { background: #141618; color: #e9e9e4; border: 1px solid #34383a; border-radius: 8px; padding: 10px 12px; font: 400 14px/1.5 'DM Sans', 'Noto Sans Thai', sans-serif; } .ds-field:focus-visible { outline: 2px solid #a9b08d; outline-offset: 2px; }"
+    },
+    {
+      "name": "Work Navigation",
+      "kind": "nav",
+      "description": "Fixed desktop rail that becomes bottom navigation on mobile.",
+      "html": "<nav class=\"ds-nav\"><a aria-current=\"page\">Overview</a></nav>",
+      "css": ".ds-nav { background: #0e0f10; color: #a1a5a6; border-color: #2a2d30; } .ds-nav [aria-current='page'] { background: #202823; color: #a9b08d; border-radius: 8px; }"
+    },
+    {
+      "name": "Metric Summary",
+      "kind": "card",
+      "refersTo": "metric-card",
+      "description": "Flat income or work count summary aligned with a bottom divider.",
+      "html": "<article class=\"ds-metric\"><span>Monthly income</span><strong>฿480.00</strong><small>Completed jobs only</small></article>",
+      "css": ".ds-metric { min-width: 0; padding: 16px 0; border-bottom: 1px solid #2a2d30; } .ds-metric span, .ds-metric small { color: #a1a5a6; font-size: 12px; } .ds-metric strong { display: block; margin-top: 8px; color: #e9e9e4; font-size: 24px; font-variant-numeric: tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Daily Contact Sheet",
+    "overview": "Farmnote treats paid game-farming work as a sequence of dated records. Its dark graphite canvas and small olive signals keep attention on what changed today, while compact summaries make income, active work, and the latest report easy to scan. The visual redesign shifts the prior metric-first dashboard toward a work-log view: progress belongs beside its dated history, and quiet separators take the place of large, heavily boxed panels.\n\nUse the existing sans-serif stack and standard app controls. Keep the interface practical and information-dense without making it cramped; the work history remains readable in both game jobs and account-care calendars. The established mobile pattern moves navigation to the bottom and lets work details adapt to the narrower viewport.",
+    "keyCharacteristics": [
+      "Matte near-black graphite with warm white text.",
+      "Muted olive reserved for primary actions, selected states, focus, and progress.",
+      "Fine neutral dividers and mostly flat surfaces.",
+      "Compact reports and totals use tabular figures where numeric alignment matters."
+    ],
+    "rules": [
+      { "name": "Single Accent Rule", "section": "Colors", "text": "Use olive for a meaningful action or state; do not turn it into a decorative wash across the page." },
+      { "name": "Quiet Label Rule", "section": "Typography", "text": "Keep metadata smaller and lower contrast than the value or job title it explains." },
+      { "name": "Divider-Over-Shadow Rule", "section": "Elevation & Depth", "text": "Use a quiet border or surface shift to define an edge instead of a resting shadow." }
+    ],
+    "dos": [
+      "Do keep completed monthly income visually tied to completed jobs.",
+      "Do put a job's latest report date near its progress summary.",
+      "Do use tabular figures for currency, counts, and progress totals.",
+      "Do keep focus visible with the olive outline.",
+      "Do let mobile layouts use bottom navigation and stack dense job details."
+    ],
+    "donts": [
+      "Don't use olive as a large decorative background.",
+      "Don't make a date mark the only way to understand whether a report exists.",
+      "Don't use shadows as the default way to separate content.",
+      "Don't turn the work log into a spacious, oversized marketing dashboard."
+    ]
+  }
+}
