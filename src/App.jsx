@@ -5,6 +5,7 @@ import genshinIcon from "../assets/genshin-icon.jpg";
 import wuwaIcon from "../assets/wuwa-icon.jpg";
 import MetricCard from "@/src/components/uniquel/MetricCard";
 import HorizontalCard from "@/src/components/uniquel/HorizontalCard";
+import { hasJobReachedCompletion } from "./jobCompletion.js";
 
 const games = { genshin: "Genshin Impact", wuwa: "Wuthering Waves" };
 const currency = { genshin: "เจม", wuwa: "แอสไตรต์" };
@@ -52,6 +53,7 @@ const fromRow = (row) => ({
   durationDays: Number(row.duration_days) || 0,
   targetGems: Number(row.target_gems) || 0,
   oreTypes: Array.isArray(row.ore_types) ? row.ore_types : [],
+  oreTargets: row.ore_targets && typeof row.ore_targets === "object" && !Array.isArray(row.ore_targets) ? row.ore_targets : {},
   agreedAmount: Number(row.agreed_amount) || 0,
   completedAt:
     row.completed_at || (row.status === "completed" ? row.updated_at : null),
@@ -147,6 +149,7 @@ function App() {
         duration_days: job.durationDays,
         target_gems: job.targetGems,
         ore_types: job.oreTypes,
+        ore_targets: job.oreTargets,
         agreed_amount: job.agreedAmount,
         completed_at: job.completedAt,
         job_date: job.date,
@@ -537,6 +540,11 @@ function App() {
                       : null,
                   agreedAmount: Number(values.agreedAmount),
                 };
+            const autoCompleted = job.status === "active" && hasJobReachedCompletion(job);
+            if (autoCompleted) {
+              job.status = "completed";
+              job.completedAt = new Date().toISOString();
+            }
             try {
               await save(job);
               setJobs((items) =>
@@ -545,7 +553,9 @@ function App() {
                   : [job, ...items],
               );
               setModal("");
-              notify(old ? "อัปเดตงานแล้ว" : "เพิ่มงานแล้ว");
+              notify(autoCompleted
+                ? "ครบเงื่อนไขแล้ว ปิดงานเรียบร้อย"
+                : old ? "อัปเดตงานแล้ว" : "เพิ่มงานแล้ว");
             } catch (error) {
               notify(`บันทึกไม่สำเร็จ: ${error.message}`);
             } finally {
@@ -567,14 +577,7 @@ function App() {
               updates: [...old.updates, entry],
               updatedAt: new Date().toISOString(),
             };
-            if (
-              old.service === "gem_farm" &&
-              old.status === "active" &&
-              next.updates.reduce(
-                (sum, item) => sum + (Number(item.gemsEarned) || 0),
-                0,
-              ) >= old.targetGems
-            ) {
+            if (old.status === "active" && hasJobReachedCompletion(next)) {
               next.status = "completed";
               next.completedAt = new Date().toISOString();
             }
@@ -584,7 +587,7 @@ function App() {
               updateSaved(
                 next,
                 next.status === "completed" && old.status === "active"
-                  ? "ถึงเป้าหมายแล้ว ปิดงานเรียบร้อย"
+                  ? "ครบเงื่อนไขแล้ว ปิดงานเรียบร้อย"
                   : "บันทึกความคืบหน้าแล้ว",
               );
             } catch (error) {
@@ -705,12 +708,16 @@ function Empty({ title, action }) {
 }
 function JobCard({ job, onDetail, onEdit, onUpdate }) {
   const gems = job.service === 'gem_farm' ? job.updates.reduce((sum, item) => sum + (Number(item.gemsEarned) || 0), 0) : 0;
+  const oreTotals = job.updates.reduce((totals, entry) => {
+    for (const log of entry.oreLogs || []) totals[log.oreType] = (totals[log.oreType] || 0) + (Number(log.earned) || 0);
+    return totals;
+  }, {});
   const progress = job.targetGems ? Math.min(100, Math.round((gems / job.targetGems) * 100)) : 0;
   const reportDates = [...new Set(job.updates.map((item) => item.date).filter(Boolean))].sort();
   const detail = job.service === 'gem_farm'
     ? gems.toLocaleString('th-TH') + ' / ' + job.targetGems.toLocaleString('th-TH') + ' ' + currency[job.game] + ' (' + progress + '%)'
     : job.service === 'ore_farm'
-      ? `ฟาร์มแร่ ${job.oreTypes.length} ชนิด · บันทึกแล้ว ${reportDates.length} วัน`
+      ? `ครบเป้า ${job.oreTypes.filter((type) => Number(job.oreTargets?.[type]) > 0 && (oreTotals[type] || 0) >= Number(job.oreTargets[type])).length}/${job.oreTypes.length} ชนิด · ${reportDates.length} วัน`
       : job.durationDays + ' วัน · บันทึกแล้ว ' + reportDates.length + ' วัน';
   const description = [job.client || 'ไม่ระบุลูกค้า', dateText(job.date), detail].join(' · ');
   return (
@@ -794,6 +801,7 @@ function JobModal({ job, editing, close, save, busy }) {
     agreedAmount: job?.agreedAmount ?? "",
     targetGems: job?.targetGems || "",
     oreTypes: job?.oreTypes || [],
+    oreTargets: job?.oreTargets || {},
     durationDays: job?.durationDays || "",
     status: job?.status || "active",
     date: job?.date || today(),
@@ -817,9 +825,18 @@ function JobModal({ job, editing, close, save, busy }) {
         className="grid gap-4"
         onSubmit={(e) => {
           e.preventDefault();
-          if (form.service === "ore_farm" && !form.oreTypes.length) {
-            setFormError("เลือกแร่ที่รับฟาร์มอย่างน้อย 1 ชนิด");
-            return;
+          if (form.service === "ore_farm") {
+            if (!form.oreTypes.length) {
+              setFormError("เลือกแร่ที่รับฟาร์มอย่างน้อย 1 ชนิด");
+              return;
+            }
+            if (form.oreTypes.some((oreType) => {
+              const target = Number(form.oreTargets[oreType]);
+              return !Number.isInteger(target) || target < 1;
+            })) {
+              setFormError("ใส่เป้าหมายเป็นจำนวนเต็มอย่างน้อย 1 สำหรับแร่ที่เลือกทุกชนิด");
+              return;
+            }
           }
           save({
             ...form,
@@ -827,6 +844,9 @@ function JobModal({ job, editing, close, save, busy }) {
             targetGems:
               form.service === "gem_farm" ? Number(form.targetGems) : 0,
             oreTypes: form.service === "ore_farm" ? form.oreTypes : [],
+            oreTargets: form.service === "ore_farm"
+              ? Object.fromEntries(form.oreTypes.map((oreType) => [oreType, Number(form.oreTargets[oreType])]))
+              : {},
             durationDays:
               form.service === "account_care" ? Number(form.durationDays) : 0,
             agreedAmount: Number(form.agreedAmount),
@@ -927,20 +947,41 @@ function JobModal({ job, editing, close, save, busy }) {
               <legend className="text-sm text-[#adb0b0]">แร่ที่ลูกค้าจ้างให้ฟาร์ม</legend>
               <div className="grid gap-2 sm:grid-cols-2">
                 {ores.map(([value, label]) => (
-                  <label key={value} className="flex items-center gap-2 text-sm text-[#deded9]">
-                    <input
-                      type="checkbox"
-                      checked={form.oreTypes.includes(value)}
-                      onChange={(e) => {
-                        setFormError("");
-                        set("oreTypes", e.target.checked
-                          ? [...form.oreTypes, value]
-                          : form.oreTypes.filter((item) => item !== value));
-                      }}
-                      className="accent-[#a9b08d]"
-                    />
-                    {label}
-                  </label>
+                  <div key={value} className="grid grid-cols-[1fr_7rem] items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm text-[#deded9]">
+                      <input
+                        type="checkbox"
+                        checked={form.oreTypes.includes(value)}
+                        onChange={(e) => {
+                          setFormError("");
+                          set("oreTypes", e.target.checked
+                            ? [...form.oreTypes, value]
+                            : form.oreTypes.filter((item) => item !== value));
+                          if (!e.target.checked) {
+                            const nextTargets = { ...form.oreTargets };
+                            delete nextTargets[value];
+                            set("oreTargets", nextTargets);
+                          }
+                        }}
+                        className="accent-[#a9b08d]"
+                      />
+                      {label}
+                    </label>
+                    {form.oreTypes.includes(value) && (
+                      <label className="text-xs text-[#a1a5a6]">
+                        เป้าหมาย
+                        <input
+                          className={field}
+                          type="number"
+                          min="1"
+                          step="1"
+                          required
+                          value={form.oreTargets[value] ?? ""}
+                          onChange={(e) => set("oreTargets", { ...form.oreTargets, [value]: e.target.value })}
+                        />
+                      </label>
+                    )}
+                  </div>
                 ))}
               </div>
               {formError && <p role="alert" className="text-xs text-[#dfa197]">{formError}</p>}
@@ -1165,6 +1206,10 @@ function DetailModal({
     (sum, entry) => sum + (Number(entry.gemsEarned) || 0),
     0,
   );
+  const oreTotals = job.updates.reduce((totals, entry) => {
+    for (const log of entry.oreLogs || []) totals[log.oreType] = (totals[log.oreType] || 0) + (Number(log.earned) || 0);
+    return totals;
+  }, {});
   const days = new Date(`${calendarMonth}-01T00:00:00`),
     monthEntries = job.updates.filter((entry) =>
       entry.date?.startsWith(calendarMonth),
@@ -1208,7 +1253,7 @@ function DetailModal({
       <p className="mt-1 text-sm text-[#a1a5a6]">
         {gem
           ? `ฟาร์มแล้ว ${gems.toLocaleString("th-TH")} / ${job.targetGems.toLocaleString("th-TH")} ${currency[job.game]}`
-          : oreFarm ? `ฟาร์มแร่ ${job.oreTypes.length} ชนิด · บันทึกแล้ว ${reportedDays} วัน`
+          : oreFarm ? `ครบเป้า ${job.oreTypes.filter((type) => Number(job.oreTargets?.[type]) > 0 && (oreTotals[type] || 0) >= Number(job.oreTargets[type])).length}/${job.oreTypes.length} ชนิด · บันทึกแล้ว ${reportedDays} วัน`
             : `บันทึกดูแลแล้ว ${reportedDays} วัน · ระยะเวลางาน ${job.durationDays} วัน`}
       </p>
       <h3 className="mb-3 mt-5 font-semibold">
@@ -1240,8 +1285,16 @@ function DetailModal({
           )}
         </div>
       ) : oreFarm ? (
-        <div className="max-h-64 space-y-2 overflow-auto">
-          {[...job.updates].sort((a, b) => b.date.localeCompare(a.date)).map((entry, i) => (
+        <div className="grid gap-3">
+          <ul className="grid gap-1 rounded-lg border border-[#2c3032] p-3 text-xs text-[#a1a5a6] sm:grid-cols-2">
+            {job.oreTypes.map((type) => (
+              <li key={type}>
+                {ores.find(([value]) => value === type)?.[1] || type}: {(oreTotals[type] || 0).toLocaleString("th-TH")} / {Number(job.oreTargets?.[type] || 0).toLocaleString("th-TH")}
+              </li>
+            ))}
+          </ul>
+          <div className="max-h-64 space-y-2 overflow-auto">
+            {[...job.updates].sort((a, b) => b.date.localeCompare(a.date)).map((entry, i) => (
             <div key={`${entry.date}-${i}`} className="rounded-lg border border-[#2c3032] p-3 text-sm">
               <strong>{dateText(entry.date)}</strong>
               <ul className="mt-2 grid gap-1 text-xs text-[#a1a5a6] sm:grid-cols-2">
@@ -1253,6 +1306,7 @@ function DetailModal({
             </div>
           ))}
           {!job.updates.length && <p className="text-sm text-[#a1a5a6]">ยังไม่มีรายการบันทึก</p>}
+          </div>
         </div>
       ) : (
         <>

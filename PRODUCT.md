@@ -16,13 +16,14 @@ Record and update farming jobs for Genshin Impact and Wuthering Waves, then revi
 
 ## Operating Context
 
-The user creates jobs with a customer, agreed price, duration, and customer conditions; updates jobs as work is done; and reviews each job's history. Gem-farming jobs track accumulated gems toward a target. Account-care jobs use daily checklists and a calendar of reported days.
+The user creates jobs with a customer, agreed price, duration, and customer conditions; updates jobs as work is done; and reviews each job's history. Gem-farming jobs track accumulated gems toward a target. Genshin ore jobs track selected ore types and a separate target for each. Account-care jobs use daily checklists and a calendar of reported days.
 
 ## Capabilities and Constraints
 
 - Separate job views for Genshin Impact and Wuthering Waves.
 - Create, edit, and delete job records; the agreed price is set when a job is created and cannot be edited later.
-- Record daily progress for jobs, including gem totals or account-care checklists as appropriate.
+- Record daily progress for jobs, including gem totals, ore counts, or account-care checklists as appropriate.
+- Automatically complete gem jobs at their target, ore jobs when every selected ore reaches its target, and account-care jobs after the configured number of distinct report days.
 - Count income only when a job is completed, grouped by completion month.
 - Persist account and job data with Supabase Auth and Supabase Database.
 - Existing implementation uses React, Vite, Tailwind CSS, and GitHub Pages.

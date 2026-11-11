@@ -10,6 +10,7 @@ create table if not exists public.farm_jobs (
   duration_days integer not null default 0 check (duration_days >= 0),
   target_gems integer not null default 0 check (target_gems >= 0),
   ore_types text[] not null default '{}'::text[],
+  ore_targets jsonb not null default '{}'::jsonb check (jsonb_typeof(ore_targets) = 'object'),
   agreed_amount numeric(12, 2) not null default 0 check (agreed_amount >= 0),
   completed_at timestamptz,
   job_date date not null,
@@ -17,6 +18,7 @@ create table if not exists public.farm_jobs (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint farm_jobs_ore_types_check check (ore_types <@ array['iron_chunk', 'white_iron_chunk', 'crystal_chunk', 'magical_crystal_chunk', 'amethyst_lump', 'starsilver', 'condessence_crystal']::text[]),
+  constraint farm_jobs_ore_target_keys_check check (service <> 'ore_farm' or ore_targets = '{}'::jsonb or (ore_targets ?& ore_types and ore_targets - ore_types = '{}'::jsonb)),
   constraint farm_jobs_ore_farm_check check ((service = 'ore_farm' and game = 'genshin' and cardinality(ore_types) > 0) or (service <> 'ore_farm' and cardinality(ore_types) = 0))
 );
 
