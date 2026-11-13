@@ -60,7 +60,9 @@ const fromRow = (row) => ({
     row.completed_at || (row.status === "completed" ? row.updated_at : null),
   date: row.job_date,
   updatedAt: row.updated_at,
-  updates: Array.isArray(row.updates) ? row.updates : [],
+  updates: Array.isArray(row.farm_job_updates)
+    ? row.farm_job_updates.sort((a, b) => a.sequence - b.sequence).map((item) => item.entry)
+    : Array.isArray(row.updates) ? row.updates : [],
 });
 const btn =
   "rounded-lg border border-[#34383a] bg-[#1b1e20] px-3 py-2 text-sm text-[#deded9] transition hover:bg-[#222526]";
@@ -99,7 +101,7 @@ function App() {
   const loadJobs = async () => {
     const { data, error } = await client
       .from("farm_jobs")
-      .select("*")
+      .select("*, farm_job_updates(job_id, sequence, report_date, entry)")
       .order("updated_at", { ascending: false });
     if (error) {
       notify(`โหลดข้อมูลงานไม่สำเร็จ: ${error.message}`);
@@ -155,9 +157,17 @@ function App() {
         agreed_amount: job.agreedAmount,
         completed_at: job.completedAt,
         job_date: job.date,
-        updates: job.updates,
         updated_at: new Date().toISOString(),
       });
+    if (error) throw error;
+  };
+  const saveUpdate = async (job, entry) => {
+    const { error } = await client.rpc("record_farm_job_update", {
+      p_job_id: job.id,
+      p_entry: entry,
+      p_status: job.status,
+      p_completed_at: job.completedAt,
+    });
     if (error) throw error;
   };
   const openJob = (job = null) => {
@@ -585,7 +595,7 @@ function App() {
             }
             setBusy(true);
             try {
-              await save(next);
+              await saveUpdate(next, entry);
               updateSaved(
                 next,
                 next.status === "completed" && old.status === "active"
