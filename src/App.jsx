@@ -197,7 +197,7 @@ function App() {
           today().slice(0, 7),
           ...jobs
             .filter((job) => job.status === "completed")
-            .map((job) => (job.completedAt || job.updatedAt || "").slice(0, 7))
+            .map((job) => job.date?.slice(0, 7))
             .filter((key) => /^\d{4}-\d{2}$/.test(key)),
         ]),
       ]
@@ -205,13 +205,13 @@ function App() {
         .reverse(),
     [jobs],
   );
-  const monthIncome = jobs
-    .filter(
-      (job) =>
-        job.status === "completed" &&
-        (job.completedAt || job.updatedAt || "").slice(0, 7) === month,
-    )
-    .reduce((sum, job) => sum + job.agreedAmount, 0);
+  const completedJobsInMonth = jobs.filter(
+    (job) => job.status === "completed" && job.date?.slice(0, 7) === month,
+  );
+  const monthIncome = completedJobsInMonth.reduce(
+    (sum, job) => sum + job.agreedAmount,
+    0,
+  );
   const sorted = [...jobs].sort((a, b) =>
     (b.updatedAt || b.date || "").localeCompare(a.updatedAt || a.date || ""),
   );
@@ -367,7 +367,7 @@ function App() {
                 <MetricCard
                   label="รายได้เดือนที่เลือก"
                   value={money(monthIncome)}
-                  change={`${jobs.filter((job) => job.status === "completed" && (job.completedAt || job.updatedAt || "").slice(0, 7) === month).length} งาน`}
+                  change={`${completedJobsInMonth.length} งาน`}
                   detail="นับเฉพาะงานที่ปิดแล้ว"
                   className="farmnote-metric max-w-none min-w-0 flex-1 px-0"
                 />
