@@ -60,9 +60,9 @@ const fromRow = (row) => ({
     row.completed_at || (row.status === "completed" ? row.updated_at : null),
   date: row.job_date,
   updatedAt: row.updated_at,
-  updates: Array.isArray(row.farm_job_updates)
-    ? row.farm_job_updates.sort((a, b) => a.sequence - b.sequence).map((item) => item.entry)
-    : Array.isArray(row.updates) ? row.updates : [],
+  updates: row.farm_job_updates
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((item) => item.entry),
 });
 const btn =
   "rounded-lg border border-[#34383a] bg-[#1b1e20] px-3 py-2 text-sm text-[#deded9] transition hover:bg-[#222526]";
