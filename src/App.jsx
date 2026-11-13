@@ -52,6 +52,7 @@ const fromRow = (row) => ({
   service: row.service || "gem_farm",
   durationDays: Number(row.duration_days) || 0,
   targetGems: Number(row.target_gems) || 0,
+  targetQuests: Number(row.target_quests) || 0,
   oreTypes: Array.isArray(row.ore_types) ? row.ore_types : [],
   oreTargets: row.ore_targets && typeof row.ore_targets === "object" && !Array.isArray(row.ore_targets) ? row.ore_targets : {},
   agreedAmount: Number(row.agreed_amount) || 0,
@@ -148,6 +149,7 @@ function App() {
         service: job.service,
         duration_days: job.durationDays,
         target_gems: job.targetGems,
+        target_quests: job.targetQuests,
         ore_types: job.oreTypes,
         ore_targets: job.oreTargets,
         agreed_amount: job.agreedAmount,
@@ -718,6 +720,8 @@ function JobCard({ job, onDetail, onEdit, onUpdate }) {
     ? gems.toLocaleString('th-TH') + ' / ' + job.targetGems.toLocaleString('th-TH') + ' ' + currency[job.game] + ' (' + progress + '%)'
     : job.service === 'ore_farm'
       ? `ครบเป้า ${job.oreTypes.filter((type) => Number(job.oreTargets?.[type]) > 0 && (oreTotals[type] || 0) >= Number(job.oreTargets[type])).length}/${job.oreTypes.length} ชนิด · ${reportDates.length} วัน`
+      : job.service === 'world_quest' || job.service === 'story_quest'
+        ? `${job.updates.reduce((sum, entry) => sum + (Number(entry.questsCompleted) || 0), 0)} / ${job.targetQuests} เควส`
       : job.durationDays + ' วัน · บันทึกแล้ว ' + reportDates.length + ' วัน';
   const description = [job.client || 'ไม่ระบุลูกค้า', dateText(job.date), detail].join(' · ');
   return (
@@ -800,6 +804,7 @@ function JobModal({ job, editing, close, save, busy }) {
     customerConditions: job?.customerConditions || "",
     agreedAmount: job?.agreedAmount ?? "",
     targetGems: job?.targetGems || "",
+    targetQuests: job?.targetQuests || "",
     oreTypes: job?.oreTypes || [],
     oreTargets: job?.oreTargets || {},
     durationDays: job?.durationDays || "",
@@ -838,11 +843,16 @@ function JobModal({ job, editing, close, save, busy }) {
               return;
             }
           }
+          if (["world_quest", "story_quest"].includes(form.service) && (!Number.isInteger(Number(form.targetQuests)) || Number(form.targetQuests) < 1)) {
+            setFormError("ระบุจำนวนเควสเป้าหมายอย่างน้อย 1 เควส");
+            return;
+          }
           save({
             ...form,
             customerConditions: form.customerConditions.trim(),
             targetGems:
               form.service === "gem_farm" ? Number(form.targetGems) : 0,
+            targetQuests: ["world_quest", "story_quest"].includes(form.service) ? Number(form.targetQuests) : 0,
             oreTypes: form.service === "ore_farm" ? form.oreTypes : [],
             oreTargets: form.service === "ore_farm"
               ? Object.fromEntries(form.oreTypes.map((oreType) => [oreType, Number(form.oreTargets[oreType])]))
@@ -872,9 +882,10 @@ function JobModal({ job, editing, close, save, busy }) {
               value={form.game}
               onChange={(e) => {
                 set("game", e.target.value);
-                if (e.target.value !== "genshin" && form.service === "ore_farm") {
+                if (e.target.value !== "genshin" && ["ore_farm", "world_quest", "story_quest"].includes(form.service)) {
                   set("service", "gem_farm");
                   set("oreTypes", []);
+                  set("oreTargets", {});
                 }
               }}
             >
@@ -893,7 +904,11 @@ function JobModal({ job, editing, close, save, busy }) {
               }}
             >
               <option value="gem_farm">ฟาร์มเจม</option>
-              {form.game === "genshin" && <option value="ore_farm">ฟาร์มแร่</option>}
+              {form.game === "genshin" && <>
+                <option value="ore_farm">ฟาร์มแร่</option>
+                <option value="world_quest">เควสโลก</option>
+                <option value="story_quest">เควสเทพ / เควสตัวละคร</option>
+              </>}
               <option value="account_care">ดูแลไอดี</option>
             </select>
           </label>
@@ -942,6 +957,17 @@ function JobModal({ job, editing, close, save, busy }) {
               step: 1,
               required: true,
             })
+          : ["world_quest", "story_quest"].includes(form.service)
+            ? <>
+                {input("จำนวนเควสทั้งหมดตามที่ตกลง", "targetQuests", {
+                  type: "number",
+                  min: 1,
+                  step: 1,
+                  required: true,
+                  placeholder: "เช่น 12",
+                })}
+                {formError && <p role="alert" className="text-xs text-[#dfa197]">{formError}</p>}
+              </>
           : form.service === "ore_farm" ? (
             <fieldset className="grid gap-2">
               <legend className="text-sm text-[#adb0b0]">แร่ที่ลูกค้าจ้างให้ฟาร์ม</legend>
@@ -1029,6 +1055,7 @@ function UpdateModal({ job, close, save, busy }) {
     rollsStart: last?.rollsEnd || 0,
     currencyEnd: "",
     rollsEnd: "",
+    questsCompleted: "",
     note: "",
     date: today(),
   });
@@ -1036,6 +1063,7 @@ function UpdateModal({ job, close, save, busy }) {
   const set = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
   const gem = job.service === "gem_farm";
   const oreFarm = job.service === "ore_farm";
+  const questFarm = job.service === "world_quest" || job.service === "story_quest";
   const oreValues = Object.fromEntries(job.oreTypes.map((type) => {
     const previous = [...job.updates].reverse().find((entry) => entry.oreLogs?.some((log) => log.oreType === type));
     return [type, { start: previous?.oreLogs?.find((log) => log.oreType === type)?.end ?? 0, end: "" }];
@@ -1043,7 +1071,7 @@ function UpdateModal({ job, close, save, busy }) {
   const [oreCounts, setOreCounts] = useState(oreValues);
   return (
     <Modal
-      title={gem ? "บันทึกยอดฟาร์มรายวัน" : oreFarm ? "บันทึกจำนวนแร่รายวัน" : "เช็กลิสต์ดูแลไอดีรายวัน"}
+      title={gem ? "บันทึกยอดฟาร์มรายวัน" : oreFarm ? "บันทึกจำนวนแร่รายวัน" : questFarm ? "บันทึกจำนวนเควสรายวัน" : "เช็กลิสต์ดูแลไอดีรายวัน"}
       close={close}
     >
       <form
@@ -1078,6 +1106,10 @@ function UpdateModal({ job, close, save, busy }) {
             });
             if (oreLogs.some(({ start, end }) => !Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start)) return;
             entry.oreLogs = oreLogs;
+          } else if (questFarm) {
+            const count = Number(values.questsCompleted);
+            if (!Number.isInteger(count) || count < 1) return;
+            entry.questsCompleted = count;
           } else
             entry.checklist = tasksFor(job.game).map((label, i) => ({
               label,
@@ -1125,6 +1157,11 @@ function UpdateModal({ job, close, save, busy }) {
               );
             })}
           </div>
+        ) : questFarm ? (
+          <label className="text-sm text-[#adb0b0]">
+            จำนวนเควสที่ทำวันนี้ (เป้าหมาย {job.targetQuests} เควส)
+            <input className={field} type="number" min="1" step="1" required value={values.questsCompleted} onChange={(e) => set("questsCompleted", e.target.value)} />
+          </label>
         ) : (
           <div className="rounded-xl border border-[#2c3032] bg-[#181a1c] p-4">
             <p className="mb-3 text-sm text-[#adb0b0]">
@@ -1201,6 +1238,7 @@ function DetailModal({
 }) {
   const gem = job.service === "gem_farm";
   const oreFarm = job.service === "ore_farm";
+  const questFarm = job.service === "world_quest" || job.service === "story_quest";
   const reportedDays = new Set(job.updates.map((entry) => entry.date).filter(Boolean)).size;
   const gems = job.updates.reduce(
     (sum, entry) => sum + (Number(entry.gemsEarned) || 0),
@@ -1210,6 +1248,10 @@ function DetailModal({
     for (const log of entry.oreLogs || []) totals[log.oreType] = (totals[log.oreType] || 0) + (Number(log.earned) || 0);
     return totals;
   }, {});
+  const completedQuests = job.updates.reduce(
+    (sum, entry) => sum + (Number(entry.questsCompleted) || 0),
+    0,
+  );
   const days = new Date(`${calendarMonth}-01T00:00:00`),
     monthEntries = job.updates.filter((entry) =>
       entry.date?.startsWith(calendarMonth),
@@ -1254,10 +1296,11 @@ function DetailModal({
         {gem
           ? `ฟาร์มแล้ว ${gems.toLocaleString("th-TH")} / ${job.targetGems.toLocaleString("th-TH")} ${currency[job.game]}`
           : oreFarm ? `ครบเป้า ${job.oreTypes.filter((type) => Number(job.oreTargets?.[type]) > 0 && (oreTotals[type] || 0) >= Number(job.oreTargets[type])).length}/${job.oreTypes.length} ชนิด · บันทึกแล้ว ${reportedDays} วัน`
+            : questFarm ? `ทำแล้ว ${completedQuests.toLocaleString("th-TH")} / ${job.targetQuests.toLocaleString("th-TH")} เควส`
             : `บันทึกดูแลแล้ว ${reportedDays} วัน · ระยะเวลางาน ${job.durationDays} วัน`}
       </p>
       <h3 className="mb-3 mt-5 font-semibold">
-        {gem ? "ประวัติยอดฟาร์มรายวัน" : oreFarm ? "ประวัติฟาร์มแร่รายวัน" : "ปฏิทินเช็กลิสต์รายวัน"}
+        {gem ? "ประวัติยอดฟาร์มรายวัน" : oreFarm ? "ประวัติฟาร์มแร่รายวัน" : questFarm ? "ประวัติการทำเควส" : "ปฏิทินเช็กลิสต์รายวัน"}
       </h3>
       {gem ? (
         <div className="max-h-64 space-y-2 overflow-auto">
@@ -1307,6 +1350,16 @@ function DetailModal({
           ))}
           {!job.updates.length && <p className="text-sm text-[#a1a5a6]">ยังไม่มีรายการบันทึก</p>}
           </div>
+        </div>
+      ) : questFarm ? (
+        <div className="max-h-64 space-y-2 overflow-auto">
+          {[...job.updates].sort((a, b) => b.date.localeCompare(a.date)).map((entry, i) => (
+            <div key={`${entry.date}-${i}`} className="rounded-lg border border-[#2c3032] p-3 text-sm">
+              <strong>{dateText(entry.date)} · +{Number(entry.questsCompleted || 0).toLocaleString("th-TH")} เควส</strong>
+              {entry.note && <p className="mt-1 text-xs text-[#a1a5a6]">{entry.note}</p>}
+            </div>
+          ))}
+          {!job.updates.length && <p className="text-sm text-[#a1a5a6]">ยังไม่มีรายการบันทึก</p>}
         </div>
       ) : (
         <>
@@ -1409,7 +1462,7 @@ function DetailModal({
           className="rounded-lg bg-[#a9b08d] px-3 py-2 text-sm font-semibold text-[#11130e]"
           onClick={onUpdate}
         >
-          {gem ? "บันทึกยอดวันนี้" : oreFarm ? "บันทึกจำนวนแร่วันนี้" : "เช็กลิสต์วันนี้"}
+          {gem ? "บันทึกยอดวันนี้" : oreFarm ? "บันทึกจำนวนแร่วันนี้" : questFarm ? "บันทึกจำนวนเควสวันนี้" : "เช็กลิสต์วันนี้"}
         </button>
       </div>
     </Modal>

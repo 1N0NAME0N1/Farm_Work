@@ -17,6 +17,14 @@ export function hasJobReachedCompletion(job) {
     });
   }
 
+  if (job.service === "world_quest" || job.service === "story_quest") {
+    const completed = job.updates.reduce(
+      (sum, entry) => sum + (Number(entry.questsCompleted) || 0),
+      0,
+    );
+    return job.targetQuests > 0 && completed >= job.targetQuests;
+  }
+
   if (job.service === "account_care") {
     const reportedDays = new Set(job.updates.map((entry) => entry.date).filter(Boolean)).size;
     return job.durationDays > 0 && reportedDays >= job.durationDays;

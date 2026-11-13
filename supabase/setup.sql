@@ -6,9 +6,10 @@ create table if not exists public.farm_jobs (
   client text not null default '' check (char_length(client) <= 60),
   customer_conditions text not null default '' check (char_length(customer_conditions) <= 1000),
   status text not null default 'active' check (status in ('active', 'completed')),
-  service text not null default 'gem_farm' check (service in ('gem_farm', 'ore_farm', 'account_care')),
+  service text not null default 'gem_farm' check (service in ('gem_farm', 'ore_farm', 'world_quest', 'story_quest', 'account_care')),
   duration_days integer not null default 0 check (duration_days >= 0),
   target_gems integer not null default 0 check (target_gems >= 0),
+  target_quests integer not null default 0 check (target_quests >= 0),
   ore_types text[] not null default '{}'::text[],
   ore_targets jsonb not null default '{}'::jsonb check (jsonb_typeof(ore_targets) = 'object'),
   agreed_amount numeric(12, 2) not null default 0 check (agreed_amount >= 0),
@@ -18,6 +19,7 @@ create table if not exists public.farm_jobs (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint farm_jobs_ore_types_check check (ore_types <@ array['iron_chunk', 'white_iron_chunk', 'crystal_chunk', 'magical_crystal_chunk', 'amethyst_lump', 'starsilver', 'condessence_crystal']::text[]),
+  constraint farm_jobs_quest_check check (((service in ('world_quest', 'story_quest')) and game = 'genshin' and target_quests > 0) or (service not in ('world_quest', 'story_quest') and target_quests = 0)),
   constraint farm_jobs_ore_target_keys_check check (service <> 'ore_farm' or ore_targets = '{}'::jsonb or (ore_targets ?& ore_types and ore_targets - ore_types = '{}'::jsonb)),
   constraint farm_jobs_ore_farm_check check ((service = 'ore_farm' and game = 'genshin' and cardinality(ore_types) > 0) or (service <> 'ore_farm' and cardinality(ore_types) = 0))
 );
