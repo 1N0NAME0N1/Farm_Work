@@ -144,6 +144,22 @@ select option {
   background: #141618;
   color: #e9e9e4;
 }
+sakuga-checkbox {
+  --sk-card: #141618;
+  --sk-ink: #deded9;
+  --sk-dim: #a1a5a6;
+  --sk-soft: #34383a;
+  --sk-pri: #a9b08d;
+  --sk-pri-ink: #11130e;
+  --sk-acc: #a9b08d;
+  --sk-track: #34383a;
+  --sk-r: 9px;
+  --sk-bw: 1.5px;
+  --sk-sh: 2px 2px 0 #34383a;
+  --sk-tick: #a9b08d;
+  --sk-fill: #a9b08d;
+  --sk-on-pri: #11130e;
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

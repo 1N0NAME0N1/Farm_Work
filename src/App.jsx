@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import "../config.js";
 import genshinIcon from "../assets/genshin-icon.jpg";
@@ -71,10 +71,27 @@ const field =
 
 function App() {
   const config = window.FARMNOTE_CONFIG;
+  const rememberSession = useRef(false);
   const client = useMemo(
     () =>
       config?.url && config?.publishableKey
-        ? createClient(config.url, config.publishableKey)
+        ? createClient(config.url, config.publishableKey, {
+            auth: {
+              storage: {
+                getItem: (key) => localStorage.getItem(key) ?? sessionStorage.getItem(key),
+                setItem: (key, value) => {
+                  const storage = rememberSession.current ? localStorage : sessionStorage;
+                  const otherStorage = rememberSession.current ? sessionStorage : localStorage;
+                  otherStorage.removeItem(key);
+                  storage.setItem(key, value);
+                },
+                removeItem: (key) => {
+                  localStorage.removeItem(key);
+                  sessionStorage.removeItem(key);
+                },
+              },
+            },
+          })
         : null,
     [config],
   );
@@ -245,6 +262,7 @@ function App() {
         setAuthMode={setAuthMode}
         message={authMessage}
         setMessage={setAuthMessage}
+        rememberSession={rememberSession}
       />
     );
 
@@ -1479,9 +1497,19 @@ function DetailModal({
   );
 }
 
-function Auth({ client, authMode, setAuthMode, message, setMessage }) {
+function Auth({ client, authMode, setAuthMode, message, setMessage, rememberSession }) {
   const [busy, setBusy] = useState(false);
   const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const rememberControl = useRef(null);
+  useEffect(() => {
+    const checkbox = rememberControl.current;
+    if (!checkbox) return;
+    const onChange = () => {
+      rememberSession.current = checkbox.checked;
+    };
+    checkbox.addEventListener("change", onChange);
+    return () => checkbox.removeEventListener("change", onChange);
+  }, [rememberSession]);
   return (
     <main className="grid min-h-screen place-items-center bg-[#090a0b] px-4 py-8">
       <section className="w-full max-w-md rounded-xl border border-[#2c3032] bg-[#141618] p-6 md:p-8">
@@ -1502,6 +1530,7 @@ function Auth({ client, authMode, setAuthMode, message, setMessage }) {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!client) return;
+            rememberSession.current = new FormData(e.currentTarget).has("remember");
             setBusy(true);
             setMessage("กำลังเชื่อมต่อ…");
             const result =
@@ -1556,6 +1585,11 @@ function Auth({ client, authMode, setAuthMode, message, setMessage }) {
               placeholder="อย่างน้อย 8 ตัวอักษร"
             />
           </label>
+          {authMode === "signin" && (
+            <sakuga-checkbox ref={rememberControl} name="remember" className="mt-1">
+              Remember me
+            </sakuga-checkbox>
+          )}
           <button
             disabled={busy || !client}
             className="rounded-lg bg-[#a9b08d] py-3 text-sm font-semibold text-[#11130e] disabled:opacity-60"
