@@ -43,6 +43,94 @@ textarea {
 }
 button {
   cursor: pointer;
+  position: relative;
+  transition:
+    transform 180ms cubic-bezier(0.2, 1.45, 0.35, 1),
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+  transform-origin: center;
+}
+@media (hover: hover) {
+  button:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+}
+button:not(:disabled):active {
+  transform: scale(0.96, 0.9) translateY(1px);
+  transition-duration: 70ms;
+}
+button:not(:disabled):active::after,
+button:not(:disabled):focus::after {
+  position: absolute;
+  inset: -3px;
+  border: 1px solid #a9b08d;
+  border-radius: inherit;
+  animation: control-impact 320ms ease-out both;
+  content: "";
+  pointer-events: none;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+select {
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23a9b08d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+select:hover:not(:disabled) {
+  border-color: #4a4e42;
+}
+select:active:not(:disabled) {
+  transform: scale(0.99);
+}
+input[type="checkbox"] {
+  display: inline-grid;
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  appearance: none;
+  place-content: center;
+  border: 1px solid #555a4a;
+  border-radius: 4px;
+  background: #1b1e20;
+  cursor: pointer;
+  transition: transform 180ms cubic-bezier(0.2, 1.45, 0.35, 1), background-color 140ms ease, border-color 140ms ease;
+}
+input[type="checkbox"]::before {
+  width: 0.3rem;
+  height: 0.52rem;
+  transform: rotate(45deg) scale(0);
+  border: solid #11130e;
+  border-width: 0 2px 2px 0;
+  content: "";
+  transition: transform 140ms cubic-bezier(0.2, 1.45, 0.35, 1);
+}
+input[type="checkbox"]:checked {
+  transform: scale(1.08);
+  border-color: #a9b08d;
+  background: #a9b08d;
+}
+input[type="checkbox"]:checked::before {
+  transform: rotate(45deg) scale(1);
+}
+input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+@keyframes control-impact {
+  from {
+    transform: scale(0.94);
+    opacity: 0.42;
+  }
+  to {
+    transform: scale(1.08);
+    opacity: 0;
+  }
 }
 button:focus-visible,
 a:focus-visible,
@@ -55,6 +143,16 @@ textarea:focus-visible {
 select option {
   background: #141618;
   color: #e9e9e4;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 ::selection {
   background: #a9b08d;
