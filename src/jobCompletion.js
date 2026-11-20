@@ -17,6 +17,17 @@ export function hasJobReachedCompletion(job) {
     });
   }
 
+  if (job.service === "oculus_farm") {
+    const totals = {};
+    for (const entry of job.updates)
+      for (const log of entry.oculusLogs || [])
+        totals[log.oculusType] = (totals[log.oculusType] || 0) + (Number(log.earned) || 0);
+    return job.oculusTypes.length > 0 && job.oculusTypes.every((type) => {
+      const target = Number(job.oculusTargets?.[type]);
+      return Number.isInteger(target) && target > 0 && (totals[type] || 0) >= target;
+    });
+  }
+
   if (job.service === "world_quest" || job.service === "story_quest") {
     const completed = job.updates.reduce(
       (sum, entry) => sum + (Number(entry.questsCompleted) || 0),

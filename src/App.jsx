@@ -18,6 +18,16 @@ const ores = [
   ["starsilver", "แร่ดาวตก"],
   ["condessence_crystal", "ผลึกคอนเดสเซนซ์"],
 ];
+const oculi = [
+  ["anemoculus", "แอนีโมคูลัส"],
+  ["geoculus", "จีโอคูลัส"],
+  ["electroculus", "อิเล็กโทรคูลัส"],
+  ["dendroculus", "เดนโดรคูลัส"],
+  ["hydroculus", "ไฮโดรคูลัส"],
+  ["pyroculus", "ไพโรคูลัส"],
+  ["cryoculus", "ไครโอคูลัส"],
+  ["lunoculus", "ลูโนคูลัส"],
+];
 const tasksFor = (game) => [
   "ไทต์รายวัน",
   "ไดอารี่",
@@ -55,6 +65,8 @@ const fromRow = (row) => ({
   targetQuests: Number(row.target_quests) || 0,
   oreTypes: Array.isArray(row.ore_types) ? row.ore_types : [],
   oreTargets: row.ore_targets && typeof row.ore_targets === "object" && !Array.isArray(row.ore_targets) ? row.ore_targets : {},
+  oculusTypes: Array.isArray(row.oculus_types) ? row.oculus_types : [],
+  oculusTargets: row.oculus_targets && typeof row.oculus_targets === "object" && !Array.isArray(row.oculus_targets) ? row.oculus_targets : {},
   agreedAmount: Number(row.agreed_amount) || 0,
   completedAt:
     row.completed_at || (row.status === "completed" ? row.updated_at : null),
@@ -171,6 +183,8 @@ function App() {
         target_quests: job.targetQuests,
         ore_types: job.oreTypes,
         ore_targets: job.oreTargets,
+        oculus_types: job.oculusTypes,
+        oculus_targets: job.oculusTargets,
         agreed_amount: job.agreedAmount,
         completed_at: job.completedAt,
         job_date: job.date,
@@ -742,12 +756,18 @@ function JobCard({ job, onDetail, onEdit, onUpdate }) {
     for (const log of entry.oreLogs || []) totals[log.oreType] = (totals[log.oreType] || 0) + (Number(log.earned) || 0);
     return totals;
   }, {});
+  const oculusTotals = job.updates.reduce((totals, entry) => {
+    for (const log of entry.oculusLogs || []) totals[log.oculusType] = (totals[log.oculusType] || 0) + (Number(log.earned) || 0);
+    return totals;
+  }, {});
   const progress = job.targetGems ? Math.min(100, Math.round((gems / job.targetGems) * 100)) : 0;
   const reportDates = [...new Set(job.updates.map((item) => item.date).filter(Boolean))].sort();
   const detail = job.service === 'gem_farm'
     ? gems.toLocaleString('th-TH') + ' / ' + job.targetGems.toLocaleString('th-TH') + ' ' + currency[job.game] + ' (' + progress + '%)'
     : job.service === 'ore_farm'
       ? `ครบเป้า ${job.oreTypes.filter((type) => Number(job.oreTargets?.[type]) > 0 && (oreTotals[type] || 0) >= Number(job.oreTargets[type])).length}/${job.oreTypes.length} ชนิด · ${reportDates.length} วัน`
+      : job.service === 'oculus_farm'
+        ? `ครบเป้า ${job.oculusTypes.filter((type) => Number(job.oculusTargets?.[type]) > 0 && (oculusTotals[type] || 0) >= Number(job.oculusTargets[type])).length}/${job.oculusTypes.length} ประเภท · ${reportDates.length} วัน`
       : job.service === 'world_quest' || job.service === 'story_quest'
         ? `${job.updates.reduce((sum, entry) => sum + (Number(entry.questsCompleted) || 0), 0)} / ${job.targetQuests} เควส`
       : job.durationDays + ' วัน · บันทึกแล้ว ' + reportDates.length + ' วัน';
@@ -835,6 +855,8 @@ function JobModal({ job, editing, close, save, busy }) {
     targetQuests: job?.targetQuests || "",
     oreTypes: job?.oreTypes || [],
     oreTargets: job?.oreTargets || {},
+    oculusTypes: job?.oculusTypes || [],
+    oculusTargets: job?.oculusTargets || {},
     durationDays: job?.durationDays || "",
     status: job?.status || "active",
     date: job?.date || today(),
@@ -871,6 +893,19 @@ function JobModal({ job, editing, close, save, busy }) {
               return;
             }
           }
+          if (form.service === "oculus_farm") {
+            if (!form.oculusTypes.length) {
+              setFormError("เลือกคูลัสที่รับฟาร์มอย่างน้อย 1 ประเภท");
+              return;
+            }
+            if (form.oculusTypes.some((type) => {
+              const target = Number(form.oculusTargets[type]);
+              return !Number.isInteger(target) || target < 1;
+            })) {
+              setFormError("ใส่เป้าหมายเป็นจำนวนเต็มอย่างน้อย 1 สำหรับคูลัสที่เลือกทุกประเภท");
+              return;
+            }
+          }
           if (["world_quest", "story_quest"].includes(form.service) && (!Number.isInteger(Number(form.targetQuests)) || Number(form.targetQuests) < 1)) {
             setFormError("ระบุจำนวนเควสเป้าหมายอย่างน้อย 1 เควส");
             return;
@@ -884,6 +919,10 @@ function JobModal({ job, editing, close, save, busy }) {
             oreTypes: form.service === "ore_farm" ? form.oreTypes : [],
             oreTargets: form.service === "ore_farm"
               ? Object.fromEntries(form.oreTypes.map((oreType) => [oreType, Number(form.oreTargets[oreType])]))
+              : {},
+            oculusTypes: form.service === "oculus_farm" ? form.oculusTypes : [],
+            oculusTargets: form.service === "oculus_farm"
+              ? Object.fromEntries(form.oculusTypes.map((type) => [type, Number(form.oculusTargets[type])]))
               : {},
             durationDays:
               form.service === "account_care" ? Number(form.durationDays) : 0,
@@ -910,10 +949,12 @@ function JobModal({ job, editing, close, save, busy }) {
               value={form.game}
               onChange={(e) => {
                 set("game", e.target.value);
-                if (e.target.value !== "genshin" && ["ore_farm", "world_quest", "story_quest"].includes(form.service)) {
+                if (e.target.value !== "genshin" && ["ore_farm", "world_quest", "story_quest", "oculus_farm"].includes(form.service)) {
                   set("service", "gem_farm");
                   set("oreTypes", []);
                   set("oreTargets", {});
+                  set("oculusTypes", []);
+                  set("oculusTargets", {});
                 }
               }}
             >
@@ -934,6 +975,7 @@ function JobModal({ job, editing, close, save, busy }) {
               <option value="gem_farm">ฟาร์มเจม</option>
               {form.game === "genshin" && <>
                 <option value="ore_farm">ฟาร์มแร่</option>
+                <option value="oculus_farm">ฟาร์มคูลัส</option>
                 <option value="world_quest">เควสโลก</option>
                 <option value="story_quest">เควสเทพ / เควสตัวละคร</option>
               </>}
@@ -1040,6 +1082,50 @@ function JobModal({ job, editing, close, save, busy }) {
               </div>
               {formError && <p role="alert" className="text-xs text-[#dfa197]">{formError}</p>}
             </fieldset>
+          ) : form.service === "oculus_farm" ? (
+            <fieldset className="grid gap-2">
+              <legend className="text-sm text-[#adb0b0]">คูลัสที่ลูกค้าจ้างให้เก็บ</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {oculi.map(([value, label]) => (
+                  <div key={value} className="grid grid-cols-[1fr_7rem] items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm text-[#deded9]">
+                      <input
+                        type="checkbox"
+                        checked={form.oculusTypes.includes(value)}
+                        onChange={(e) => {
+                          setFormError("");
+                          set("oculusTypes", e.target.checked
+                            ? [...form.oculusTypes, value]
+                            : form.oculusTypes.filter((type) => type !== value));
+                          if (!e.target.checked) {
+                            const nextTargets = { ...form.oculusTargets };
+                            delete nextTargets[value];
+                            set("oculusTargets", nextTargets);
+                          }
+                        }}
+                        className="accent-[#a9b08d]"
+                      />
+                      {label}
+                    </label>
+                    {form.oculusTypes.includes(value) && (
+                      <label className="text-xs text-[#a1a5a6]">
+                        เป้าหมาย
+                        <input
+                          className={field}
+                          type="number"
+                          min="1"
+                          step="1"
+                          required
+                          value={form.oculusTargets[value] ?? ""}
+                          onChange={(e) => set("oculusTargets", { ...form.oculusTargets, [value]: e.target.value })}
+                        />
+                      </label>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {formError && <p role="alert" className="text-xs text-[#dfa197]">{formError}</p>}
+            </fieldset>
           ) : input("ระยะเวลางาน (วัน)", "durationDays", {
               type: "number",
               min: 1,
@@ -1091,15 +1177,21 @@ function UpdateModal({ job, close, save, busy }) {
   const set = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
   const gem = job.service === "gem_farm";
   const oreFarm = job.service === "ore_farm";
+  const oculusFarm = job.service === "oculus_farm";
   const questFarm = job.service === "world_quest" || job.service === "story_quest";
   const oreValues = Object.fromEntries(job.oreTypes.map((type) => {
     const previous = [...job.updates].reverse().find((entry) => entry.oreLogs?.some((log) => log.oreType === type));
     return [type, { start: previous?.oreLogs?.find((log) => log.oreType === type)?.end ?? 0, end: "" }];
   }));
   const [oreCounts, setOreCounts] = useState(oreValues);
+  const oculusValues = Object.fromEntries(job.oculusTypes.map((type) => {
+    const previous = [...job.updates].reverse().find((entry) => entry.oculusLogs?.some((log) => log.oculusType === type));
+    return [type, { start: previous?.oculusLogs?.find((log) => log.oculusType === type)?.end ?? 0, end: "" }];
+  }));
+  const [oculusCounts, setOculusCounts] = useState(oculusValues);
   return (
     <Modal
-      title={gem ? "บันทึกยอดฟาร์มรายวัน" : oreFarm ? "บันทึกจำนวนแร่รายวัน" : questFarm ? "บันทึกจำนวนเควสรายวัน" : "เช็กลิสต์ดูแลไอดีรายวัน"}
+      title={gem ? "บันทึกยอดฟาร์มรายวัน" : oreFarm ? "บันทึกจำนวนแร่รายวัน" : oculusFarm ? "บันทึกจำนวนคูลัสรายวัน" : questFarm ? "บันทึกจำนวนเควสรายวัน" : "เช็กลิสต์ดูแลไอดีรายวัน"}
       close={close}
     >
       <form
@@ -1134,6 +1226,14 @@ function UpdateModal({ job, close, save, busy }) {
             });
             if (oreLogs.some(({ start, end }) => !Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start)) return;
             entry.oreLogs = oreLogs;
+          } else if (oculusFarm) {
+            const oculusLogs = job.oculusTypes.map((oculusType) => {
+              const start = Number(oculusCounts[oculusType]?.start);
+              const end = Number(oculusCounts[oculusType]?.end);
+              return { oculusType, start, end, earned: end - start };
+            });
+            if (oculusLogs.some(({ start, end }) => !Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start)) return;
+            entry.oculusLogs = oculusLogs;
           } else if (questFarm) {
             const count = Number(values.questsCompleted);
             if (!Number.isInteger(count) || count < 1) return;
@@ -1179,6 +1279,23 @@ function UpdateModal({ job, close, save, busy }) {
                     <label key={key} className="text-sm text-[#adb0b0]">
                       {text}
                       <input className={field} type="number" min={key === "end" ? oreCounts[oreType].start : 0} step="1" required value={oreCounts[oreType][key]} onChange={(e) => setOreCounts((prev) => ({ ...prev, [oreType]: { ...prev[oreType], [key]: e.target.value } }))} />
+                    </label>
+                  ))}
+                </fieldset>
+              );
+            })}
+          </div>
+        ) : oculusFarm ? (
+          <div className="grid gap-3">
+            {job.oculusTypes.map((type) => {
+              const label = oculi.find(([value]) => value === type)?.[1] || type;
+              return (
+                <fieldset key={type} className="grid grid-cols-2 gap-3 rounded-lg border border-[#2c3032] p-3">
+                  <legend className="px-1 text-sm text-[#deded9]">{label}</legend>
+                  {[["start", "เริ่มต้น"], ["end", "สิ้นวัน"]].map(([key, text]) => (
+                    <label key={key} className="text-sm text-[#adb0b0]">
+                      {text}
+                      <input className={field} type="number" min={key === "end" ? oculusCounts[type].start : 0} step="1" required value={oculusCounts[type][key]} onChange={(e) => setOculusCounts((prev) => ({ ...prev, [type]: { ...prev[type], [key]: e.target.value } }))} />
                     </label>
                   ))}
                 </fieldset>
@@ -1266,6 +1383,7 @@ function DetailModal({
 }) {
   const gem = job.service === "gem_farm";
   const oreFarm = job.service === "ore_farm";
+  const oculusFarm = job.service === "oculus_farm";
   const questFarm = job.service === "world_quest" || job.service === "story_quest";
   const reportedDays = new Set(job.updates.map((entry) => entry.date).filter(Boolean)).size;
   const gems = job.updates.reduce(
@@ -1274,6 +1392,10 @@ function DetailModal({
   );
   const oreTotals = job.updates.reduce((totals, entry) => {
     for (const log of entry.oreLogs || []) totals[log.oreType] = (totals[log.oreType] || 0) + (Number(log.earned) || 0);
+    return totals;
+  }, {});
+  const oculusTotals = job.updates.reduce((totals, entry) => {
+    for (const log of entry.oculusLogs || []) totals[log.oculusType] = (totals[log.oculusType] || 0) + (Number(log.earned) || 0);
     return totals;
   }, {});
   const completedQuests = job.updates.reduce(
@@ -1324,11 +1446,12 @@ function DetailModal({
         {gem
           ? `ฟาร์มแล้ว ${gems.toLocaleString("th-TH")} / ${job.targetGems.toLocaleString("th-TH")} ${currency[job.game]}`
           : oreFarm ? `ครบเป้า ${job.oreTypes.filter((type) => Number(job.oreTargets?.[type]) > 0 && (oreTotals[type] || 0) >= Number(job.oreTargets[type])).length}/${job.oreTypes.length} ชนิด · บันทึกแล้ว ${reportedDays} วัน`
+            : oculusFarm ? `ครบเป้า ${job.oculusTypes.filter((type) => Number(job.oculusTargets?.[type]) > 0 && (oculusTotals[type] || 0) >= Number(job.oculusTargets[type])).length}/${job.oculusTypes.length} ประเภท · บันทึกแล้ว ${reportedDays} วัน`
             : questFarm ? `ทำแล้ว ${completedQuests.toLocaleString("th-TH")} / ${job.targetQuests.toLocaleString("th-TH")} เควส`
             : `บันทึกดูแลแล้ว ${reportedDays} วัน · ระยะเวลางาน ${job.durationDays} วัน`}
       </p>
       <h3 className="mb-3 mt-5 font-semibold">
-        {gem ? "ประวัติยอดฟาร์มรายวัน" : oreFarm ? "ประวัติฟาร์มแร่รายวัน" : questFarm ? "ประวัติการทำเควส" : "ปฏิทินเช็กลิสต์รายวัน"}
+        {gem ? "ประวัติยอดฟาร์มรายวัน" : oreFarm ? "ประวัติฟาร์มแร่รายวัน" : oculusFarm ? "ประวัติเก็บคูลัสรายวัน" : questFarm ? "ประวัติการทำเควส" : "ปฏิทินเช็กลิสต์รายวัน"}
       </h3>
       {gem ? (
         <div className="max-h-64 space-y-2 overflow-auto">
@@ -1377,6 +1500,30 @@ function DetailModal({
             </div>
           ))}
           {!job.updates.length && <p className="text-sm text-[#a1a5a6]">ยังไม่มีรายการบันทึก</p>}
+          </div>
+        </div>
+      ) : oculusFarm ? (
+        <div className="grid gap-3">
+          <ul className="grid gap-1 rounded-lg border border-[#2c3032] p-3 text-xs text-[#a1a5a6] sm:grid-cols-2">
+            {job.oculusTypes.map((type) => (
+              <li key={type}>
+                {oculi.find(([value]) => value === type)?.[1] || type}: {(oculusTotals[type] || 0).toLocaleString("th-TH")} / {Number(job.oculusTargets?.[type] || 0).toLocaleString("th-TH")}
+              </li>
+            ))}
+          </ul>
+          <div className="max-h-64 space-y-2 overflow-auto">
+            {[...job.updates].sort((a, b) => b.date.localeCompare(a.date)).map((entry, i) => (
+              <div key={`${entry.date}-${i}`} className="rounded-lg border border-[#2c3032] p-3 text-sm">
+                <strong>{dateText(entry.date)}</strong>
+                <ul className="mt-2 grid gap-1 text-xs text-[#a1a5a6] sm:grid-cols-2">
+                  {(entry.oculusLogs || []).map((log) => (
+                    <li key={log.oculusType}>{oculi.find(([value]) => value === log.oculusType)?.[1] || log.oculusType}: {log.start} → {log.end} · +{log.earned}</li>
+                  ))}
+                </ul>
+                {entry.note && <p className="mt-2 text-xs text-[#a1a5a6]">{entry.note}</p>}
+              </div>
+            ))}
+            {!job.updates.length && <p className="text-sm text-[#a1a5a6]">ยังไม่มีรายการบันทึก</p>}
           </div>
         </div>
       ) : questFarm ? (
@@ -1490,7 +1637,7 @@ function DetailModal({
           className="rounded-lg bg-[#a9b08d] px-3 py-2 text-sm font-semibold text-[#11130e]"
           onClick={onUpdate}
         >
-          {gem ? "บันทึกยอดวันนี้" : oreFarm ? "บันทึกจำนวนแร่วันนี้" : questFarm ? "บันทึกจำนวนเควสวันนี้" : "เช็กลิสต์วันนี้"}
+          {gem ? "บันทึกยอดวันนี้" : oreFarm ? "บันทึกจำนวนแร่วันนี้" : oculusFarm ? "บันทึกจำนวนคูลัสวันนี้" : questFarm ? "บันทึกจำนวนเควสวันนี้" : "เช็กลิสต์วันนี้"}
         </button>
       </div>
     </Modal>

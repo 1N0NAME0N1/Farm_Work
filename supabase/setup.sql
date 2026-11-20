@@ -1,3 +1,18 @@
+create or replace function public.has_positive_integer_targets(p_targets jsonb, p_types text[])
+returns boolean
+language sql
+immutable
+parallel safe
+as $$
+  select coalesce(bool_and(
+    case when jsonb_typeof(p_targets -> selected.type) = 'number' then
+      (p_targets ->> selected.type)::numeric >= 1
+      and trunc((p_targets ->> selected.type)::numeric) = (p_targets ->> selected.type)::numeric
+    else false end
+  ), false)
+  from unnest(p_types) as selected(type);
+$$;
+
 create table if not exists public.farm_jobs (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
@@ -6,12 +21,14 @@ create table if not exists public.farm_jobs (
   client text not null default '' check (char_length(client) <= 60),
   customer_conditions text not null default '' check (char_length(customer_conditions) <= 1000),
   status text not null default 'active' check (status in ('active', 'completed')),
-  service text not null default 'gem_farm' check (service in ('gem_farm', 'ore_farm', 'world_quest', 'story_quest', 'account_care')),
+  service text not null default 'gem_farm' check (service in ('gem_farm', 'ore_farm', 'oculus_farm', 'world_quest', 'story_quest', 'account_care')),
   duration_days integer not null default 0 check (duration_days >= 0),
   target_gems integer not null default 0 check (target_gems >= 0),
   target_quests integer not null default 0 check (target_quests >= 0),
   ore_types text[] not null default '{}'::text[],
   ore_targets jsonb not null default '{}'::jsonb check (jsonb_typeof(ore_targets) = 'object'),
+  oculus_types text[] not null default '{}'::text[],
+  oculus_targets jsonb not null default '{}'::jsonb check (jsonb_typeof(oculus_targets) = 'object'),
   agreed_amount numeric(12, 2) not null default 0 check (agreed_amount >= 0),
   completed_at timestamptz,
   job_date date not null,
@@ -20,7 +37,10 @@ create table if not exists public.farm_jobs (
   constraint farm_jobs_ore_types_check check (ore_types <@ array['iron_chunk', 'white_iron_chunk', 'crystal_chunk', 'magical_crystal_chunk', 'amethyst_lump', 'starsilver', 'condessence_crystal']::text[]),
   constraint farm_jobs_quest_check check (((service in ('world_quest', 'story_quest')) and game = 'genshin' and target_quests > 0) or (service not in ('world_quest', 'story_quest') and target_quests = 0)),
   constraint farm_jobs_ore_target_keys_check check (service <> 'ore_farm' or ore_targets = '{}'::jsonb or (ore_targets ?& ore_types and ore_targets - ore_types = '{}'::jsonb)),
-  constraint farm_jobs_ore_farm_check check ((service = 'ore_farm' and game = 'genshin' and cardinality(ore_types) > 0) or (service <> 'ore_farm' and cardinality(ore_types) = 0))
+  constraint farm_jobs_ore_farm_check check ((service = 'ore_farm' and game = 'genshin' and cardinality(ore_types) > 0) or (service <> 'ore_farm' and cardinality(ore_types) = 0)),
+  constraint farm_jobs_oculus_types_check check (oculus_types <@ array['anemoculus', 'geoculus', 'electroculus', 'dendroculus', 'hydroculus', 'pyroculus', 'cryoculus', 'lunoculus']::text[]),
+  constraint farm_jobs_oculus_target_values_check check ((service = 'oculus_farm' and oculus_targets ?& oculus_types and oculus_targets - oculus_types = '{}'::jsonb and public.has_positive_integer_targets(oculus_targets, oculus_types)) or (service <> 'oculus_farm' and oculus_targets = '{}'::jsonb)),
+  constraint farm_jobs_oculus_farm_check check ((service = 'oculus_farm' and game = 'genshin' and cardinality(oculus_types) > 0) or (service <> 'oculus_farm' and cardinality(oculus_types) = 0))
 );
 
 alter table public.farm_jobs enable row level security;
