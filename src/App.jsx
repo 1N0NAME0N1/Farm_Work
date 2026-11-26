@@ -311,11 +311,11 @@ function App() {
           <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="5" height="5" rx="1" /><rect x="12" y="3" width="5" height="5" rx="1" /><rect x="3" y="12" width="5" height="5" rx="1" /><rect x="12" y="12" width="5" height="5" rx="1" /></svg><span className="md:ml-2">ภาพรวม</span>
         </NavButton>
         <NavButton active={page === "today"} onClick={() => setPage("today")}>
-          <span className="md:ml-2 max-sm:hidden">งานที่ต้องทำวันนี้</span><span className="sm:hidden">Todo</span>
+          <span className="md:ml-2 max-sm:hidden">งานที่ต้องทำวันนี้</span><span className="sm:hidden">วันนี้</span>
           <span className="hidden md:ml-auto md:block">{todayJobs.length}</span>
         </NavButton>
         <NavButton active={page === "reported-today"} onClick={() => setPage("reported-today")}>
-          <span className="md:ml-2 max-sm:hidden">งานที่ทำแล้ววันนี้</span><span className="sm:hidden">Done</span>
+          <span className="md:ml-2 max-sm:hidden">งานที่ทำแล้ววันนี้</span><span className="sm:hidden">ทำแล้ว</span>
           <span className="hidden md:ml-auto md:block">{reportedTodayJobs.length}</span>
         </NavButton>
         <p className="hidden px-3 pb-2 pt-8 text-[10px] font-semibold uppercase tracking-[.16em] text-[#929697] md:block">
@@ -345,7 +345,7 @@ function App() {
           <div className="rounded-lg border border-[#2c3032] px-3 py-2 text-xs text-[#a1a5a6]">
             บันทึกบน Supabase
           </div>
-          {isOwner ? <button className={`${btn} mt-3 w-full`} onClick={() => client.auth.signOut()}>Sign out</button> : <button className={`${btn} mt-3 w-full`} onClick={() => setLoginOpen(true)}>Owner sign in</button>}
+          {isOwner ? <button className={`${btn} mt-3 w-full`} onClick={() => client.auth.signOut()}>ออกจากระบบ</button> : <button className={`${btn} mt-3 w-full`} onClick={() => setLoginOpen(true)}>เข้าสู่ระบบสำหรับเจ้าของ</button>}
         </div>
       </aside>
       <main className="mx-auto min-h-screen w-full min-w-0 max-w-[1500px] px-4 pb-24 md:ml-0 md:flex-1 md:px-10 md:pb-8 xl:px-14">
@@ -353,7 +353,7 @@ function App() {
           <div className="text-xs text-[#a1a5a6]">
             งานของฉัน <span className="px-2 text-[#686d70]">/</span>{" "}
             <strong className="font-medium text-[#deded9]">
-              {page === "dashboard" ? "ภาพรวม" : games[page]}
+              {page === "dashboard" ? "ภาพรวม" : page === "today" ? "งานที่ต้องทำวันนี้" : page === "reported-today" ? "งานที่ทำแล้ววันนี้" : games[page]}
             </strong>
           </div>
           <div className="flex items-center gap-3 text-xs text-[#a1a5a6]">
@@ -366,7 +366,7 @@ function App() {
               }).format(new Date())}
             </span>
             <span className="hidden max-w-40 truncate lg:block">
-              {isOwner ? user.email : "Read-only view"}
+              {isOwner ? user.email : "โหมดผู้ชม"}
             </span>
             {isOwner ? <button
               className={`${btn} px-2 py-1 md:hidden`}
@@ -374,17 +374,17 @@ function App() {
               aria-label="ออกจากระบบ"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M8 4H4.8A1.8 1.8 0 0 0 3 5.8v8.4A1.8 1.8 0 0 0 4.8 16H8" /><path d="M10 13l3-3-3-3M6 10h7" /></svg>
-            </button> : <button className={`${btn} px-2 py-1`} onClick={() => setLoginOpen(true)}>Sign in</button>}
+            </button> : <button className={`${btn} px-2 py-1`} onClick={() => setLoginOpen(true)}>เข้าสู่ระบบ</button>}
           </div>
         </header>
         {page === "today" || page === "reported-today" ? (
           <section className="mx-auto max-w-6xl py-6 md:py-10">
             <div className="mb-6 flex items-end justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{page === "today" ? "To report today" : "Reported today"}</h1>
-                <p className="mt-1 text-sm text-[#a1a5a6]">{new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${todayDate}T00:00:00`))} · {page === "today" ? todayJobs.length : reportedTodayJobs.length} jobs</p>
+                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{page === "today" ? "งานที่ต้องทำวันนี้" : "งานที่ทำแล้ววันนี้"}</h1>
+                <p className="mt-1 text-sm text-[#a1a5a6]">{new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${todayDate}T00:00:00`))} · {page === "today" ? todayJobs.length : reportedTodayJobs.length} งาน</p>
               </div>
-              {isOwner && <button className="rounded-lg bg-[#a9b08d] px-4 py-2.5 text-sm font-semibold text-[#11130e]" onClick={() => openJob()}>Add job</button>}
+              {isOwner && <button className="rounded-lg bg-[#a9b08d] px-4 py-2.5 text-sm font-semibold text-[#11130e]" onClick={() => openJob()}>เพิ่มงาน</button>}
             </div>
             {(page === "today" ? todayJobs : reportedTodayJobs).length ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -394,8 +394,8 @@ function App() {
               </div>
             ) : (
               <div className="rounded-xl border border-[#2a2d30] px-5 py-12 text-center">
-                <h2 className="font-medium">{page === "today" ? "All caught up" : "No reports yet today"}</h2>
-                <p className="mt-2 text-sm text-[#a1a5a6]">{page === "today" ? "There are no active jobs waiting for today's report." : "Jobs with a report today will appear here."}</p>
+                <h2 className="font-medium">{page === "today" ? "วันนี้ไม่มีงานที่รอบันทึก" : "ยังไม่มีการบันทึกงานวันนี้"}</h2>
+                <p className="mt-2 text-sm text-[#a1a5a6]">{page === "today" ? "งานที่ยังไม่ได้บันทึกจะแสดงที่นี่" : "งานที่บันทึกแล้วในวันนี้จะแสดงที่นี่"}</p>
               </div>
             )}
           </section>
@@ -841,7 +841,7 @@ function JobCard({ job, onDetail, onEdit, onUpdate, readOnly = false }) {
       </div>
       {(onEdit || onUpdate) && <div className='flex gap-2 px-4 pb-4'>
         {onUpdate && <button onClick={onUpdate} className='flex-1 rounded-lg border border-[#34383a] bg-[#1b1e20] px-2 py-2 text-xs text-[#deded9] transition hover:bg-[#222526]'>บันทึกรายวัน</button>}
-        {onEdit && <button onClick={onEdit} className={btn + ' px-3 py-2 text-xs'}>Edit</button>}
+        {onEdit && <button onClick={onEdit} className={btn + ' px-3 py-2 text-xs'}>แก้ไข</button>}
       </div>}
     </div>
   );
@@ -1691,8 +1691,8 @@ function Auth({ client, message, setMessage, rememberSession, close }) {
     return () => checkbox.removeEventListener("change", onChange);
   }, [rememberSession]);
   return (
-    <Modal title="Owner sign in" close={close}>
-      <p className="text-sm text-[#a1a5a6]">Public visitors can view jobs without an account.</p>
+    <Modal title="เข้าสู่ระบบสำหรับเจ้าของ" close={close}>
+      <p className="text-sm text-[#a1a5a6]">ผู้ชมสามารถดูงานได้โดยไม่ต้องเข้าสู่ระบบ</p>
       <form className="mt-5 grid gap-4" onSubmit={async (e) => {
         e.preventDefault();
         if (!client) return;
@@ -1703,10 +1703,10 @@ function Auth({ client, message, setMessage, rememberSession, close }) {
         setMessage(result.error?.message || "");
         if (!result.error) close();
       }}>
-        <label className="text-sm text-[#adb0b0]">Email<input className={field} type="email" autoComplete="email" required value={credentials.email} onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} /></label>
-        <label className="text-sm text-[#adb0b0]">Password<input className={field} type="password" minLength="8" autoComplete="current-password" required value={credentials.password} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} /></label>
+        <label className="text-sm text-[#adb0b0]">อีเมล<input className={field} type="email" autoComplete="email" required value={credentials.email} onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} /></label>
+        <label className="text-sm text-[#adb0b0]">รหัสผ่าน<input className={field} type="password" minLength="8" autoComplete="current-password" required value={credentials.password} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} /></label>
         <sakuga-checkbox ref={rememberControl} name="remember" className="mt-1">Remember me</sakuga-checkbox>
-        <button disabled={busy || !client} className="rounded-lg bg-[#a9b08d] py-3 text-sm font-semibold text-[#11130e] disabled:opacity-60">{busy ? "Signing in..." : "Sign in"}</button>
+        <button disabled={busy || !client} className="rounded-lg bg-[#a9b08d] py-3 text-sm font-semibold text-[#11130e] disabled:opacity-60">{busy ? "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e40\u0e02\u0e49\u0e32\u0e2a\u0e39\u0e48\u0e23\u0e30\u0e1a\u0e1a..." : "\u0e40\u0e02\u0e49\u0e32\u0e2a\u0e39\u0e48\u0e23\u0e30\u0e1a\u0e1a"}</button>
         <p role="status" className="min-h-5 text-center text-sm text-[#deded9]">{message}</p>
       </form>
     </Modal>
