@@ -27,7 +27,6 @@ create table if not exists public.farm_jobs (
   ore_targets jsonb not null default '{}'::jsonb check (jsonb_typeof(ore_targets) = 'object'),
   oculus_types text[] not null default '{}'::text[],
   oculus_targets jsonb not null default '{}'::jsonb check (jsonb_typeof(oculus_targets) = 'object'),
-  agreed_amount numeric(12, 2) not null default 0 check (agreed_amount >= 0),
   completed_at timestamptz,
   job_date date not null,
   created_at timestamptz not null default now(),
@@ -44,7 +43,8 @@ create table if not exists public.farm_jobs (
 create table if not exists public.farm_job_private (
   job_id uuid primary key references public.farm_jobs(id) on delete cascade,
   client text not null default '' check (char_length(client) <= 60),
-  customer_conditions text not null default '' check (char_length(customer_conditions) <= 1000)
+  customer_conditions text not null default '' check (char_length(customer_conditions) <= 1000),
+  agreed_amount numeric(12, 2) not null default 0 check (agreed_amount >= 0)
 );
 
 alter table public.farm_job_private enable row level security;
@@ -152,7 +152,7 @@ $$;
 
 drop trigger if exists farm_jobs_agreed_amount_immutable on public.farm_jobs;
 create trigger farm_jobs_agreed_amount_immutable
-  before update of agreed_amount on public.farm_jobs
+  before update of agreed_amount on public.farm_job_private
   for each row execute function public.prevent_farm_job_agreed_amount_change();
 
 

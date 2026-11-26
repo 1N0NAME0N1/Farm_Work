@@ -68,7 +68,7 @@ const fromRow = (row) => ({
   oreTargets: row.ore_targets && typeof row.ore_targets === "object" && !Array.isArray(row.ore_targets) ? row.ore_targets : {},
   oculusTypes: Array.isArray(row.oculus_types) ? row.oculus_types : [],
   oculusTargets: row.oculus_targets && typeof row.oculus_targets === "object" && !Array.isArray(row.oculus_targets) ? row.oculus_targets : {},
-  agreedAmount: Number(row.agreed_amount) || 0,
+  agreedAmount: Number(row.farm_job_private?.agreed_amount ?? row.farm_job_private?.[0]?.agreed_amount) || 0,
   completedAt:
     row.completed_at || (row.status === "completed" ? row.updated_at : null),
   date: row.job_date,
@@ -133,7 +133,7 @@ function App() {
     if (!client) return;
     const { data, error } = await client
       .from("farm_jobs")
-      .select("id, game, title, status, service, duration_days, target_gems, target_quests, ore_types, ore_targets, oculus_types, oculus_targets, agreed_amount, completed_at, job_date, updated_at, farm_job_private(client, customer_conditions), farm_job_updates(job_id, sequence, report_date, entry)")
+      .select("id, game, title, status, service, duration_days, target_gems, target_quests, ore_types, ore_targets, oculus_types, oculus_targets, completed_at, job_date, updated_at, farm_job_private(client, customer_conditions, agreed_amount), farm_job_updates(job_id, sequence, report_date, entry)")
       .order("updated_at", { ascending: false });
     if (error) {
       notify(`โหลดข้อมูลงานไม่สำเร็จ: ${error.message}`);
@@ -185,7 +185,6 @@ function App() {
         ore_targets: job.oreTargets,
         oculus_types: job.oculusTypes,
         oculus_targets: job.oculusTargets,
-        agreed_amount: job.agreedAmount,
         completed_at: job.completedAt,
         job_date: job.date,
         updated_at: new Date().toISOString(),
@@ -195,6 +194,7 @@ function App() {
       job_id: job.id,
       client: job.client,
       customer_conditions: job.customerConditions,
+      agreed_amount: job.agreedAmount,
     }, { onConflict: "job_id" });
     if (privateError) throw privateError;
   };
@@ -420,7 +420,7 @@ function App() {
               )}
             </div>
             <div className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 md:gap-4">
-              <div className="col-span-2 flex min-w-0 flex-col gap-2 md:col-span-1">
+              {isOwner && <div className="col-span-2 flex min-w-0 flex-col gap-2 md:col-span-1">
                 <select
                   aria-label="เลือกเดือน"
                   value={months.includes(month) ? month : months[0]}
@@ -443,7 +443,7 @@ function App() {
                   detail="นับเฉพาะงานที่ปิดแล้ว"
                   className="farmnote-metric max-w-none min-w-0 flex-1 px-0"
                 />
-              </div>
+              </div>}
               <Metric
                 title="กำลังทำ"
                 value={jobs.filter((job) => job.status === "active").length}
@@ -470,7 +470,7 @@ function App() {
                   <table className="w-full text-left text-xs sm:text-sm">
                     <thead className="text-xs text-[#a1a5a6]">
                       <tr>
-                        {["ชื่องาน", "เกม", "ลูกค้า", "สถานะ", "รายงานล่าสุด", "รายได้"].filter((_, index) => isOwner || index !== 2).map(
+                        {["ชื่องาน", "เกม", "ลูกค้า", "สถานะ", "รายงานล่าสุด", "รายได้"].filter((_, index) => isOwner || (index !== 2 && index !== 5)).map(
                           (x) => (
                             <th key={x} className={`px-2 py-3 font-medium sm:px-3 lg:px-5 ${x === "เกม" || x === "ลูกค้า" || x === "รายงานล่าสุด" ? "hidden lg:table-cell" : ""}`}>
                               {x}
@@ -506,11 +506,7 @@ function App() {
                           <td className="hidden px-5 py-3 text-[#a1a5a6] lg:table-cell">
                             {job.updates.at(-1)?.date ? dateText(job.updates.at(-1).date) : "ยังไม่มี"}
                           </td>
-                          <td className="px-2 py-3 text-right tabular-nums sm:px-3 lg:px-5">
-                            {money(
-                              job.status === "completed" ? job.agreedAmount : 0,
-                            )}
-                          </td>
+                          {isOwner && <td className="px-2 py-3 text-right tabular-nums sm:px-3 lg:px-5">{money(job.status === "completed" ? job.agreedAmount : 0)}</td>}
                         </tr>
                       ))}
                     </tbody>
@@ -814,7 +810,7 @@ function JobCard({ job, onDetail, onEdit, onUpdate, readOnly = false }) {
         label={job.status === 'completed' ? 'เสร็จแล้ว' : 'กำลังทำ'}
         title={job.title}
         description={description}
-        price={money(job.agreedAmount)}
+        price={readOnly ? '' : money(job.agreedAmount)}
         actionLabel='ดูรายละเอียด'
         href={'#job-' + job.id}
         className='!max-w-none !rounded-none !border-0 !shadow-none'
@@ -1458,6 +1454,7 @@ function DetailModal({
         {games[job.game]}{!readOnly ? " / " + (job.client || "-") : ""} /{" "}
         {job.status === "completed" ? "เสร็จแล้ว" : "กำลังทำ"}
       </p>
+      {!readOnly && <>
       <div className="rounded-xl border border-[#34383a] bg-[#191b1d] p-4">
         <p className="text-xs text-[#a1a5a6]">
           {job.status === "completed" ? "รายได้ที่นับแล้ว" : "รายได้หลังปิดงาน"}
@@ -1469,6 +1466,7 @@ function DetailModal({
       <p className="mt-3 text-sm text-[#a1a5a6]">
         ค่าจ้างที่ตกลง: {money(job.agreedAmount)}
       </p>
+      </>}
       {!readOnly && (
       <section className="mt-4 rounded-xl border border-[#2c3032] bg-[#181a1c] p-4">
         <h3 className="text-xs font-medium text-[#a1a5a6]">เงื่อนไขของลูกค้า</h3>
