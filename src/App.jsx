@@ -311,11 +311,11 @@ function App() {
           <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="5" height="5" rx="1" /><rect x="12" y="3" width="5" height="5" rx="1" /><rect x="3" y="12" width="5" height="5" rx="1" /><rect x="12" y="12" width="5" height="5" rx="1" /></svg><span className="md:ml-2">ภาพรวม</span>
         </NavButton>
         <NavButton active={page === "today"} onClick={() => setPage("today")}>
-          <span className="md:ml-2 max-sm:hidden">To report</span><span className="sm:hidden">Todo</span>
+          <span className="md:ml-2 max-sm:hidden">งานที่ต้องทำวันนี้</span><span className="sm:hidden">Todo</span>
           <span className="hidden md:ml-auto md:block">{todayJobs.length}</span>
         </NavButton>
         <NavButton active={page === "reported-today"} onClick={() => setPage("reported-today")}>
-          <span className="md:ml-2 max-sm:hidden">Reported today</span><span className="sm:hidden">Done</span>
+          <span className="md:ml-2 max-sm:hidden">งานที่ทำแล้ววันนี้</span><span className="sm:hidden">Done</span>
           <span className="hidden md:ml-auto md:block">{reportedTodayJobs.length}</span>
         </NavButton>
         <p className="hidden px-3 pb-2 pt-8 text-[10px] font-semibold uppercase tracking-[.16em] text-[#929697] md:block">
@@ -382,7 +382,7 @@ function App() {
             <div className="mb-6 flex items-end justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{page === "today" ? "To report today" : "Reported today"}</h1>
-                <p className="mt-1 text-sm text-[#a1a5a6]">{new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${todayDate}T00:00:00`))} ? {page === "today" ? todayJobs.length : reportedTodayJobs.length} jobs</p>
+                <p className="mt-1 text-sm text-[#a1a5a6]">{new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${todayDate}T00:00:00`))} · {page === "today" ? todayJobs.length : reportedTodayJobs.length} jobs</p>
               </div>
               {isOwner && <button className="rounded-lg bg-[#a9b08d] px-4 py-2.5 text-sm font-semibold text-[#11130e]" onClick={() => openJob()}>Add job</button>}
             </div>
@@ -410,12 +410,14 @@ function App() {
                   รายได้ที่ปิดงานแล้วและงานที่กำลังทำ
                 </p>
               </div>
+              {isOwner && (
               <button
                 className="rounded-lg bg-[#a9b08d] px-4 py-2.5 text-sm font-semibold text-[#11130e] transition hover:bg-[#bcc59f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9b08d]"
                 onClick={() => openJob()}
               >
                 เพิ่มงาน
               </button>
+              )}
             </div>
             <div className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 md:gap-4">
               <div className="col-span-2 flex min-w-0 flex-col gap-2 md:col-span-1">
@@ -517,7 +519,7 @@ function App() {
               ) : (
                 <Empty
                   title="เริ่มบันทึกงานแรกของคุณ"
-                  action={() => openJob()}
+                  action={isOwner ? () => openJob() : undefined}
                 />
               )}
             </section>
@@ -534,12 +536,14 @@ function App() {
                   {gameJobs.filter((job) => job.status === "completed").length}
                 </p>
               </div>
+              {isOwner && (
               <button
                 className="rounded-lg bg-[#a9b08d] px-4 py-2.5 text-sm font-semibold text-[#11130e]"
                 onClick={() => openJob()}
               >
                 เพิ่มงาน
               </button>
+              )}
             </div>
             <div className="mb-5 flex gap-2">
               {[
@@ -575,7 +579,7 @@ function App() {
                 ))}
               </div>
             ) : (
-              <Empty title="ยังไม่มีงานในหมวดนี้" action={() => openJob()} />
+              <Empty title="ยังไม่มีงานในหมวดนี้" action={isOwner ? () => openJob() : undefined} />
             )}
           </section>
         )}
@@ -771,12 +775,10 @@ function Empty({ title, action }) {
   return (
     <div className="px-5 py-12 text-center">
       <h3 className="font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-[#a1a5a6]">
-        เพิ่มงานเพื่อเริ่มติดตามความคืบหน้า
-      </p>
-      <button className={`${btn} mt-4`} onClick={action}>
+      <p className="mt-2 text-sm text-[#a1a5a6]">{action ? เพิ่มงานเพื่อเริ่มติดตามความคืบหน้า : "ไม่มีงานในระบบ"}</p>
+      {action && <button className={`${btn} mt-4`} onClick={action}>
         เพิ่มงานแรก
-      </button>
+      </button>}
     </div>
   );
 }
