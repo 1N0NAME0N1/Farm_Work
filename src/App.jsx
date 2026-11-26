@@ -57,8 +57,8 @@ const fromRow = (row) => ({
   id: row.id,
   game: row.game,
   title: row.title,
-  client: row.client || "",
-  customerConditions: row.customer_conditions || "",
+  client: row.farm_job_private?.client || row.farm_job_private?.[0]?.client || "",
+  customerConditions: row.farm_job_private?.customer_conditions || row.farm_job_private?.[0]?.customer_conditions || "",
   status: row.status,
   service: row.service || "gem_farm",
   durationDays: Number(row.duration_days) || 0,
@@ -133,7 +133,7 @@ function App() {
     if (!client) return;
     const { data, error } = await client
       .from("farm_jobs")
-      .select("*, farm_job_updates(job_id, sequence, report_date, entry)")
+      .select("id, game, title, status, service, duration_days, target_gems, target_quests, ore_types, ore_targets, oculus_types, oculus_targets, agreed_amount, completed_at, job_date, updated_at, farm_job_private(client, customer_conditions), farm_job_updates(job_id, sequence, report_date, entry)")
       .order("updated_at", { ascending: false });
     if (error) {
       notify(`โหลดข้อมูลงานไม่สำเร็จ: ${error.message}`);
@@ -176,8 +176,6 @@ function App() {
         owner_id: user.id,
         game: job.game,
         title: job.title,
-        client: job.client,
-        customer_conditions: job.customerConditions,
         status: job.status,
         service: job.service,
         duration_days: job.durationDays,
@@ -193,6 +191,12 @@ function App() {
         updated_at: new Date().toISOString(),
       });
     if (error) throw error;
+    const { error: privateError } = await client.from("farm_job_private").upsert({
+      job_id: job.id,
+      client: job.client,
+      customer_conditions: job.customerConditions,
+    }, { onConflict: "job_id" });
+    if (privateError) throw privateError;
   };
   const saveUpdate = async (job, entry) => {
     const { error } = await client.rpc("record_farm_job_update", {
@@ -224,6 +228,7 @@ function App() {
   };
   const openUpdate = (job) => {
     if (!isOwner) return;
+    if (wasReportedToday(job)) { notify("This job already has a report for today."); return; }
     setSelected(job);
     setModal("update");
   };
@@ -260,6 +265,10 @@ function App() {
   const sorted = [...jobs].sort((a, b) =>
     (b.updatedAt || b.date || "").localeCompare(a.updatedAt || a.date || ""),
   );
+  const todayDate = today();
+  const wasReportedToday = (job) => job.updates.some((entry) => entry.date === todayDate);
+  const todayJobs = sorted.filter((job) => job.status === "active" && !wasReportedToday(job));
+  const reportedTodayJobs = sorted.filter(wasReportedToday);
   const gameJobs = sorted.filter((job) => job.game === page),
     visibleJobs =
       statusFilter === "all"
@@ -300,6 +309,14 @@ function App() {
           }}
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="5" height="5" rx="1" /><rect x="12" y="3" width="5" height="5" rx="1" /><rect x="3" y="12" width="5" height="5" rx="1" /><rect x="12" y="12" width="5" height="5" rx="1" /></svg><span className="md:ml-2">ภาพรวม</span>
+        </NavButton>
+        <NavButton active={page === "today"} onClick={() => setPage("today")}>
+          <span className="md:ml-2 max-sm:hidden">To report</span><span className="sm:hidden">Todo</span>
+          <span className="hidden md:ml-auto md:block">{todayJobs.length}</span>
+        </NavButton>
+        <NavButton active={page === "reported-today"} onClick={() => setPage("reported-today")}>
+          <span className="md:ml-2 max-sm:hidden">Reported today</span><span className="sm:hidden">Done</span>
+          <span className="hidden md:ml-auto md:block">{reportedTodayJobs.length}</span>
         </NavButton>
         <p className="hidden px-3 pb-2 pt-8 text-[10px] font-semibold uppercase tracking-[.16em] text-[#929697] md:block">
           เกมของฉัน
@@ -360,7 +377,29 @@ function App() {
             </button> : <button className={`${btn} px-2 py-1`} onClick={() => setLoginOpen(true)}>Sign in</button>}
           </div>
         </header>
-        {page === "dashboard" ? (
+        {page === "today" || page === "reported-today" ? (
+          <section className="mx-auto max-w-6xl py-6 md:py-10">
+            <div className="mb-6 flex items-end justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{page === "today" ? "To report today" : "Reported today"}</h1>
+                <p className="mt-1 text-sm text-[#a1a5a6]">{new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${todayDate}T00:00:00`))} ? {page === "today" ? todayJobs.length : reportedTodayJobs.length} jobs</p>
+              </div>
+              {isOwner && <button className="rounded-lg bg-[#a9b08d] px-4 py-2.5 text-sm font-semibold text-[#11130e]" onClick={() => openJob()}>Add job</button>}
+            </div>
+            {(page === "today" ? todayJobs : reportedTodayJobs).length ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {(page === "today" ? todayJobs : reportedTodayJobs).map((job) => (
+                  <JobCard key={job.id} job={job} readOnly={!isOwner} onDetail={() => openDetail(job)} onEdit={isOwner ? () => openJob(job) : undefined} onUpdate={isOwner && page === "today" ? () => openUpdate(job) : undefined} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-[#2a2d30] px-5 py-12 text-center">
+                <h2 className="font-medium">{page === "today" ? "All caught up" : "No reports yet today"}</h2>
+                <p className="mt-2 text-sm text-[#a1a5a6]">{page === "today" ? "There are no active jobs waiting for today's report." : "Jobs with a report today will appear here."}</p>
+              </div>
+            )}
+          </section>
+        ) : page === "dashboard" ? (
           <section className="mx-auto max-w-6xl py-6 md:py-10">
             <div className="mb-6 flex items-end justify-between gap-3">
               <div>
@@ -429,7 +468,7 @@ function App() {
                   <table className="w-full text-left text-xs sm:text-sm">
                     <thead className="text-xs text-[#a1a5a6]">
                       <tr>
-                        {["ชื่องาน", "เกม", "ลูกค้า", "สถานะ", "รายงานล่าสุด", "รายได้"].map(
+                        {["ชื่องาน", "เกม", "ลูกค้า", "สถานะ", "รายงานล่าสุด", "รายได้"].filter((_, index) => isOwner || index !== 2).map(
                           (x) => (
                             <th key={x} className={`px-2 py-3 font-medium sm:px-3 lg:px-5 ${x === "เกม" || x === "ลูกค้า" || x === "รายงานล่าสุด" ? "hidden lg:table-cell" : ""}`}>
                               {x}
@@ -449,7 +488,7 @@ function App() {
                               {job.title}
                             </button>
                             <span className="mt-1 block text-[10px] text-[#a1a5a6] lg:hidden">
-                              {games[job.game]} · {job.client || "ไม่ระบุลูกค้า"}
+                              {games[job.game]}{isOwner ? " / " + (job.client || "-") : ""}
                             </span>
                             <span className="block text-[10px] text-[#848889] lg:hidden">
                               รายงานล่าสุด {job.updates.at(-1)?.date ? dateText(job.updates.at(-1).date) : "ยังไม่มี"}
@@ -458,9 +497,7 @@ function App() {
                           <td className="hidden px-5 py-3 text-[#a1a5a6] lg:table-cell">
                             {games[job.game]}
                           </td>
-                          <td className="hidden px-5 py-3 text-[#a1a5a6] lg:table-cell">
-                            {job.client || "—"}
-                          </td>
+                          {isOwner && <td className="hidden px-5 py-3 text-[#a1a5a6] lg:table-cell">{job.client || "-"}</td>}
                           <td className="px-2 py-3 sm:px-3 lg:px-5">
                             <Status status={job.status} />
                           </td>
@@ -530,6 +567,7 @@ function App() {
                   <JobCard
                     key={job.id}
                     job={job}
+                    readOnly={!isOwner}
                     onDetail={() => openDetail(job)}
                     onEdit={isOwner ? () => openJob(job) : undefined}
                     onUpdate={isOwner ? () => openUpdate(job) : undefined}
@@ -742,7 +780,7 @@ function Empty({ title, action }) {
     </div>
   );
 }
-function JobCard({ job, onDetail, onEdit, onUpdate }) {
+function JobCard({ job, onDetail, onEdit, onUpdate, readOnly = false }) {
   const gems = job.service === 'gem_farm' ? job.updates.reduce((sum, item) => sum + (Number(item.gemsEarned) || 0), 0) : 0;
   const oreTotals = job.updates.reduce((totals, entry) => {
     for (const log of entry.oreLogs || []) totals[log.oreType] = (totals[log.oreType] || 0) + (Number(log.earned) || 0);
@@ -763,7 +801,7 @@ function JobCard({ job, onDetail, onEdit, onUpdate }) {
       : job.service === 'world_quest' || job.service === 'story_quest'
         ? `${job.updates.reduce((sum, entry) => sum + (Number(entry.questsCompleted) || 0), 0)} / ${job.targetQuests} เควส`
       : job.durationDays + ' วัน · บันทึกแล้ว ' + reportDates.length + ' วัน';
-  const description = [job.client || 'ไม่ระบุลูกค้า', dateText(job.date), detail].join(' · ');
+  const description = [!readOnly && job.client, dateText(job.date), detail].filter(Boolean).join(' / ');
   return (
     <div id={'job-' + job.id} className='overflow-hidden rounded-xl border border-[#292c2f] bg-[#141618] transition hover:border-[#4a4e42]' onClick={(event) => {
       if (event.target.closest('a')) { event.preventDefault(); onDetail(); }
@@ -1415,7 +1453,7 @@ function DetailModal({
   return (
     <Modal title={job.title} close={close} wide>
       <p className="-mt-3 mb-4 text-sm text-[#a1a5a6]">
-        {games[job.game]} · {job.client || "ไม่ระบุลูกค้า"} ·{" "}
+        {games[job.game]}{!readOnly ? " / " + (job.client || "-") : ""} /{" "}
         {job.status === "completed" ? "เสร็จแล้ว" : "กำลังทำ"}
       </p>
       <div className="rounded-xl border border-[#34383a] bg-[#191b1d] p-4">
@@ -1429,12 +1467,14 @@ function DetailModal({
       <p className="mt-3 text-sm text-[#a1a5a6]">
         ค่าจ้างที่ตกลง: {money(job.agreedAmount)}
       </p>
+      {!readOnly && (
       <section className="mt-4 rounded-xl border border-[#2c3032] bg-[#181a1c] p-4">
         <h3 className="text-xs font-medium text-[#a1a5a6]">เงื่อนไขของลูกค้า</h3>
         <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-[#deded9]">
           {job.customerConditions?.trim() || "ไม่มีเงื่อนไขเพิ่มเติม"}
         </p>
       </section>
+      )}
       <p className="mt-1 text-sm text-[#a1a5a6]">
         {gem
           ? `ฟาร์มแล้ว ${gems.toLocaleString("th-TH")} / ${job.targetGems.toLocaleString("th-TH")} ${currency[job.game]}`
