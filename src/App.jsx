@@ -775,7 +775,7 @@ function Empty({ title, action }) {
   return (
     <div className="px-5 py-12 text-center">
       <h3 className="font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-[#a1a5a6]">{action ? เพิ่มงานเพื่อเริ่มติดตามความคืบหน้า : "ไม่มีงานในระบบ"}</p>
+      <p className="mt-2 text-sm text-[#a1a5a6]">{action ? "Add a job to start tracking progress." : "\u0e44\u0e21\u0e48\u0e21\u0e35\u0e07\u0e32\u0e19\u0e43\u0e19\u0e23\u0e30\u0e1a\u0e1a"}</p>
       {action && <button className={`${btn} mt-4`} onClick={action}>
         เพิ่มงานแรก
       </button>}
