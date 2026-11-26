@@ -7,6 +7,7 @@ import MetricCard from "@/src/components/uniquel/MetricCard";
 import HorizontalCard from "@/src/components/uniquel/HorizontalCard";
 import { hasJobReachedCompletion } from "./jobCompletion.js";
 
+const OWNER_ID = "366b259b-dd59-43ac-8b40-caade4a46a63";
 const games = { genshin: "Genshin Impact", wuwa: "Wuthering Waves" };
 const currency = { genshin: "เจม", wuwa: "แอสไตรต์" };
 const ores = [
@@ -110,6 +111,8 @@ function App() {
   const [user, setUser] = useState(null),
     [jobs, setJobs] = useState([]),
     [ready, setReady] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const isOwner = user?.id === OWNER_ID;
   const [page, setPage] = useState("dashboard"),
     [statusFilter, setStatusFilter] = useState("all"),
     [month, setMonth] = useState(today().slice(0, 7));
@@ -118,8 +121,7 @@ function App() {
     [editing, setEditing] = useState(false),
     [toast, setToast] = useState(""),
     [busy, setBusy] = useState(false);
-  const [authMode, setAuthMode] = useState("signin"),
-    [authMessage, setAuthMessage] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
   const [calendarMonth, setCalendarMonth] = useState(today().slice(0, 7)),
     [careDate, setCareDate] = useState(today());
 
@@ -128,6 +130,7 @@ function App() {
     window.setTimeout(() => setToast(""), 2500);
   };
   const loadJobs = async () => {
+    if (!client) return;
     const { data, error } = await client
       .from("farm_jobs")
       .select("*, farm_job_updates(job_id, sequence, report_date, entry)")
@@ -149,15 +152,14 @@ function App() {
     } = client.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user || null;
       setUser(nextUser);
-      if (nextUser) queueMicrotask(() => active && loadJobs());
-      else setJobs([]);
+      queueMicrotask(() => active && loadJobs());
       setReady(true);
     });
-    client.auth.getSession().then(({ data }) => {
+    client.auth.getSession().then(async ({ data }) => {
       if (active) {
         setUser(data.session?.user || null);
-        setReady(true);
-        if (data.session?.user) loadJobs();
+        await loadJobs();
+        if (active) setReady(true);
       }
     });
     return () => {
@@ -202,6 +204,7 @@ function App() {
     if (error) throw error;
   };
   const openJob = (job = null) => {
+    if (!isOwner) return;
     setSelected(job);
     setEditing(Boolean(job));
     setModal("job");
@@ -220,6 +223,7 @@ function App() {
     setModal("detail");
   };
   const openUpdate = (job) => {
+    if (!isOwner) return;
     setSelected(job);
     setModal("update");
   };
@@ -268,17 +272,7 @@ function App() {
         กำลังเชื่อมต่อ…
       </div>
     );
-  if (!user)
-    return (
-      <Auth
-        client={client}
-        authMode={authMode}
-        setAuthMode={setAuthMode}
-        message={authMessage}
-        setMessage={setAuthMessage}
-        rememberSession={rememberSession}
-      />
-    );
+
 
   return (
     <div
@@ -334,12 +328,7 @@ function App() {
           <div className="rounded-lg border border-[#2c3032] px-3 py-2 text-xs text-[#a1a5a6]">
             บันทึกบน Supabase
           </div>
-          <button
-            className={`${btn} mt-3 w-full`}
-            onClick={() => client.auth.signOut()}
-          >
-            ออกจากระบบ
-          </button>
+          {isOwner ? <button className={`${btn} mt-3 w-full`} onClick={() => client.auth.signOut()}>Sign out</button> : <button className={`${btn} mt-3 w-full`} onClick={() => setLoginOpen(true)}>Owner sign in</button>}
         </div>
       </aside>
       <main className="mx-auto min-h-screen w-full min-w-0 max-w-[1500px] px-4 pb-24 md:ml-0 md:flex-1 md:px-10 md:pb-8 xl:px-14">
@@ -360,15 +349,15 @@ function App() {
               }).format(new Date())}
             </span>
             <span className="hidden max-w-40 truncate lg:block">
-              {user.email}
+              {isOwner ? user.email : "Read-only view"}
             </span>
-            <button
+            {isOwner ? <button
               className={`${btn} px-2 py-1 md:hidden`}
               onClick={() => client.auth.signOut()}
               aria-label="ออกจากระบบ"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M8 4H4.8A1.8 1.8 0 0 0 3 5.8v8.4A1.8 1.8 0 0 0 4.8 16H8" /><path d="M10 13l3-3-3-3M6 10h7" /></svg>
-            </button>
+            </button> : <button className={`${btn} px-2 py-1`} onClick={() => setLoginOpen(true)}>Sign in</button>}
           </div>
         </header>
         {page === "dashboard" ? (
@@ -542,8 +531,8 @@ function App() {
                     key={job.id}
                     job={job}
                     onDetail={() => openDetail(job)}
-                    onEdit={() => openJob(job)}
-                    onUpdate={() => openUpdate(job)}
+                    onEdit={isOwner ? () => openJob(job) : undefined}
+                    onUpdate={isOwner ? () => openUpdate(job) : undefined}
                   />
                 ))}
               </div>
@@ -556,7 +545,7 @@ function App() {
           Farmnote · บันทึกงานส่วนตัว
         </footer>
       </main>
-      {modal === "job" && (
+      {isOwner && modal === "job" && (
         <JobModal
           job={selected}
           editing={editing}
@@ -609,7 +598,7 @@ function App() {
           busy={busy}
         />
       )}
-      {modal === "update" && selected && (
+      {isOwner && modal === "update" && selected && (
         <UpdateModal
           job={selected}
           close={() => setModal("")}
@@ -646,6 +635,7 @@ function App() {
         <DetailModal
           job={jobs.find((job) => job.id === selected.id) || selected}
           close={() => setModal("")}
+          readOnly={!isOwner}
           onEdit={() =>
             openJob(jobs.find((job) => job.id === selected.id) || selected)
           }
@@ -653,6 +643,7 @@ function App() {
             openUpdate(jobs.find((job) => job.id === selected.id) || selected)
           }
           onDelete={async () => {
+            if (!isOwner) return;
             const job = jobs.find((item) => item.id === selected.id);
             if (
               !job ||
@@ -677,6 +668,7 @@ function App() {
           setCareDate={setCareDate}
         />
       )}
+      {!isOwner && loginOpen && <Auth client={client} message={authMessage} setMessage={setAuthMessage} rememberSession={rememberSession} close={() => setLoginOpen(false)} />}
       {toast && (
         <div
           role="status"
@@ -807,10 +799,10 @@ function JobCard({ job, onDetail, onEdit, onUpdate }) {
           ) : <span className='text-xs text-[#848889]'>ยังไม่มีบันทึก</span>}
         </div>
       </div>
-      <div className='flex gap-2 px-4 pb-4'>
-        <button onClick={onUpdate} className='flex-1 rounded-lg border border-[#34383a] bg-[#1b1e20] px-2 py-2 text-xs text-[#deded9] transition hover:bg-[#222526]'>บันทึกรายวัน</button>
-        <button onClick={onEdit} className={btn + ' px-3 py-2 text-xs'}>แก้ไข</button>
-      </div>
+      {(onEdit || onUpdate) && <div className='flex gap-2 px-4 pb-4'>
+        {onUpdate && <button onClick={onUpdate} className='flex-1 rounded-lg border border-[#34383a] bg-[#1b1e20] px-2 py-2 text-xs text-[#deded9] transition hover:bg-[#222526]'>บันทึกรายวัน</button>}
+        {onEdit && <button onClick={onEdit} className={btn + ' px-3 py-2 text-xs'}>Edit</button>}
+      </div>}
     </div>
   );
 }
@@ -1372,6 +1364,7 @@ function UpdateModal({ job, close, save, busy }) {
 
 function DetailModal({
   job,
+  readOnly = false,
   close,
   onEdit,
   onUpdate,
@@ -1623,7 +1616,7 @@ function DetailModal({
           </div>
         </>
       )}
-      <div className="mt-5 flex flex-wrap justify-end gap-2">
+      {!readOnly && <div className="mt-5 flex flex-wrap justify-end gap-2">
         <button
           className="rounded-lg border border-[#57352f] bg-[#251918] px-3 py-2 text-sm text-[#dfa197]"
           onClick={onDelete}
@@ -1639,134 +1632,42 @@ function DetailModal({
         >
           {gem ? "บันทึกยอดวันนี้" : oreFarm ? "บันทึกจำนวนแร่วันนี้" : oculusFarm ? "บันทึกจำนวนคูลัสวันนี้" : questFarm ? "บันทึกจำนวนเควสวันนี้" : "เช็กลิสต์วันนี้"}
         </button>
-      </div>
+      </div>}
     </Modal>
   );
 }
 
-function Auth({ client, authMode, setAuthMode, message, setMessage, rememberSession }) {
+function Auth({ client, message, setMessage, rememberSession, close }) {
   const [busy, setBusy] = useState(false);
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const rememberControl = useRef(null);
   useEffect(() => {
     const checkbox = rememberControl.current;
     if (!checkbox) return;
-    const onChange = () => {
-      rememberSession.current = checkbox.checked;
-    };
+    const onChange = () => { rememberSession.current = checkbox.checked; };
     checkbox.addEventListener("change", onChange);
     return () => checkbox.removeEventListener("change", onChange);
   }, [rememberSession]);
   return (
-    <main className="grid min-h-screen place-items-center bg-[#090a0b] px-4 py-8">
-      <section className="w-full max-w-md rounded-xl border border-[#2c3032] bg-[#141618] p-6 md:p-8">
-        <BrandAuth />
-        <h1 className="mt-8 text-2xl font-semibold">
-          {authMode === "signin" ? "เข้าสู่ระบบ" : "สมัครใช้งาน"}
-        </h1>
-        <p className="mt-2 text-sm text-[#a1a5a6]">
-          ลงชื่อเข้าใช้เพื่อดูแลและบันทึกข้อมูลงานของคุณ
-        </p>
-        {!client && (
-          <p className="mt-4 rounded-lg bg-[#29241b] p-3 text-sm text-[#d7c18f]">
-            ตั้งค่า URL และ Publishable key ใน config.js ก่อนใช้งาน
-          </p>
-        )}
-        <form
-          className="mt-6 grid gap-4"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!client) return;
-            rememberSession.current = new FormData(e.currentTarget).has("remember");
-            setBusy(true);
-            setMessage("กำลังเชื่อมต่อ…");
-            const result =
-              authMode === "signin"
-                ? await client.auth.signInWithPassword(credentials)
-                : await client.auth.signUp({
-                    ...credentials,
-                    options: {
-                      emailRedirectTo: new URL(
-                        import.meta.env.BASE_URL,
-                        window.location.href,
-                      ).href,
-                    },
-                  });
-            setBusy(false);
-            setMessage(
-              result.error?.message ||
-                (authMode === "signup" && !result.data.session
-                  ? "สมัครแล้ว กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ"
-                  : ""),
-            );
-          }}
-        >
-          <label className="text-sm text-[#adb0b0]">
-            อีเมล
-            <input
-              className={field}
-              type="email"
-              autoComplete="email"
-              required
-              value={credentials.email}
-              onChange={(e) =>
-                setCredentials({ ...credentials, email: e.target.value })
-              }
-              placeholder="you@example.com"
-            />
-          </label>
-          <label className="text-sm text-[#adb0b0]">
-            รหัสผ่าน
-            <input
-              className={field}
-              type="password"
-              minLength="8"
-              autoComplete={
-                authMode === "signin" ? "current-password" : "new-password"
-              }
-              required
-              value={credentials.password}
-              onChange={(e) =>
-                setCredentials({ ...credentials, password: e.target.value })
-              }
-              placeholder="อย่างน้อย 8 ตัวอักษร"
-            />
-          </label>
-          {authMode === "signin" && (
-            <sakuga-checkbox ref={rememberControl} name="remember" className="mt-1">
-              Remember me
-            </sakuga-checkbox>
-          )}
-          <button
-            disabled={busy || !client}
-            className="rounded-lg bg-[#a9b08d] py-3 text-sm font-semibold text-[#11130e] disabled:opacity-60"
-          >
-            {busy
-              ? "กำลังดำเนินการ…"
-              : authMode === "signin"
-                ? "เข้าสู่ระบบ"
-                : "สมัครใช้งาน"}
-          </button>
-        </form>
-        <button
-          className="mt-4 w-full text-sm text-[#cad2b2]"
-          onClick={() => {
-            setAuthMode(authMode === "signin" ? "signup" : "signin");
-            setMessage("");
-          }}
-        >
-          {authMode === "signin"
-            ? "ยังไม่มีบัญชี? สมัครใช้งาน"
-            : "มีบัญชีแล้ว? เข้าสู่ระบบ"}
-        </button>
-        <p
-          role="status"
-          className="mt-3 min-h-5 text-center text-sm text-[#deded9]"
-        >
-          {message}
-        </p>
-      </section>
-    </main>
+    <Modal title="Owner sign in" close={close}>
+      <p className="text-sm text-[#a1a5a6]">Public visitors can view jobs without an account.</p>
+      <form className="mt-5 grid gap-4" onSubmit={async (e) => {
+        e.preventDefault();
+        if (!client) return;
+        rememberSession.current = new FormData(e.currentTarget).has("remember");
+        setBusy(true);
+        const result = await client.auth.signInWithPassword(credentials);
+        setBusy(false);
+        setMessage(result.error?.message || "");
+        if (!result.error) close();
+      }}>
+        <label className="text-sm text-[#adb0b0]">Email<input className={field} type="email" autoComplete="email" required value={credentials.email} onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} /></label>
+        <label className="text-sm text-[#adb0b0]">Password<input className={field} type="password" minLength="8" autoComplete="current-password" required value={credentials.password} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} /></label>
+        <sakuga-checkbox ref={rememberControl} name="remember" className="mt-1">Remember me</sakuga-checkbox>
+        <button disabled={busy || !client} className="rounded-lg bg-[#a9b08d] py-3 text-sm font-semibold text-[#11130e] disabled:opacity-60">{busy ? "Signing in..." : "Sign in"}</button>
+        <p role="status" className="min-h-5 text-center text-sm text-[#deded9]">{message}</p>
+      </form>
+    </Modal>
   );
 }
 function BrandAuth() {
